@@ -33,3 +33,7 @@ class MultimodalInput(BaseModel):
 def process_input(data: MultimodalInput):
     result = controller.process_input(data.dict())
     return result
+
+from app.websocket.websocket_router import router as websocket_router
+
+app.include_router(websocket_router)
