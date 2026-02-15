@@ -67,3 +67,5 @@ class CognitiveController:
           },
           "generated_response": generated_response
            }
+
+
