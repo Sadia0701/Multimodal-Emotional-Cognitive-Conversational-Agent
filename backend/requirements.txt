@@ -1,0 +1,13 @@
+fastapi
+uvicorn
+openai
+python-dotenv
+pydantic
+numpy
+opencv-python
+mediapipe
+librosa
+soundfile
+torch
+transformers
+websockets
