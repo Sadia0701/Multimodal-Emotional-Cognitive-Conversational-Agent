@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Multimodal Cognitive Agent</title>
+</head>
+<body>
+
+<h2>Speech Interaction</h2>
+
+<button onclick="startRecording()">Start</button>
+<button onclick="stopRecording()">Stop</button>
+
+<pre id="output"></pre>
+
+<script>
+    const ws = new WebSocket("ws://127.0.0.1:8000/ws/multimodal");
+    const output = document.getElementById("output");
+
+    let mediaRecorder;
+    let audioChunks = [];
+
+    ws.onopen = () => {
+        output.innerHTML += "Connected to server\n";
+    };
+
+    ws.onmessage = (event) => {
+        output.innerHTML += "\nSERVER:\n" + event.data + "\n";
+    };
+
+    async function startRecording() {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+
+        mediaRecorder = new MediaRecorder(stream, {
+            mimeType: "audio/webm"
+        });
+
+        audioChunks = [];
+
+        mediaRecorder.ondataavailable = (event) => {
+            if (event.data.size > 0) {
+                audioChunks.push(event.data);
+            }
+        };
+
+        mediaRecorder.onstop = async () => {
+            const blob = new Blob(audioChunks, { type: "audio/webm" });
+            const arrayBuffer = await blob.arrayBuffer();
+
+            // Send full clean audio blob
+            ws.send(arrayBuffer);
+        };
+
+        mediaRecorder.start();
+        output.innerHTML += "Recording...\n";
+    }
+
+    function stopRecording() {
+        mediaRecorder.stop();
+        output.innerHTML += "Processing...\n";
+    }
+</script>
+
+</body>
+</html>

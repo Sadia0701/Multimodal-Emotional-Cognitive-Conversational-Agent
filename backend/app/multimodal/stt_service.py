@@ -1,29 +1,30 @@
 from faster_whisper import WhisperModel
-import numpy as np
-import tempfile
-import soundfile as sf
 
 
 class STTService:
 
     def __init__(self):
+
+        print("Loading Whisper medium on GPU...")
+
         self.model = WhisperModel(
-            "base",
-            device="cpu",
-            compute_type="int8"
+            "medium",
+            device="cuda",
+            compute_type="float16"
         )
 
-    def transcribe_audio(self, audio_bytes: bytes) -> str:
+        print("Whisper ready.")
 
-        # Save temporary WAV file
-        with tempfile.NamedTemporaryFile(suffix=".wav", delete=True) as tmp:
-            tmp.write(audio_bytes)
-            tmp.flush()
+    def transcribe_audio(self, audio_path):
 
-            segments, _ = self.model.transcribe(tmp.name)
+        segments, info = self.model.transcribe(
+            audio_path,
+            beam_size=5,
+            vad_filter=True
+        )
 
-            text = ""
-            for segment in segments:
-                text += segment.text + " "
+        text = ""
+        for segment in segments:
+            text += segment.text + " "
 
         return text.strip()

@@ -49,3 +49,32 @@ class StreamingPipeline:
             fused_input
         )
         return result
+
+    import tempfile
+import os
+
+
+async def process_audio_bytes(self, audio_bytes: bytes):
+
+    # Save clean audio file
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".webm") as tmp:
+        tmp.write(audio_bytes)
+        tmp_path = tmp.name
+
+    # GPU Transcription
+    transcription = self.stt.transcribe_audio(tmp_path)
+
+    # Remove temp file
+    os.remove(tmp_path)
+
+    if not transcription:
+        return {"status": "no_speech_detected"}
+
+    # Build structured perception input
+    data = {
+        "text": transcription,
+        "face_emotion": "neutral",
+        "voice_emotion": None
+    }
+
+    return await self.process_stream(data)    

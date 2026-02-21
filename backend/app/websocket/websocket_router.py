@@ -1,23 +1,33 @@
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from app.websocket.connection_manager import ConnectionManager
 from app.multimodal.streaming_pipeline import StreamingPipeline
+import json
 
 router = APIRouter()
-manager = ConnectionManager()
+#manager = ConnectionManager()
 
 
 @router.websocket("/ws/multimodal")
 async def multimodal_websocket(websocket: WebSocket):
-    await manager.connect(websocket)
 
-    # Create NEW pipeline per connection
+    await websocket.accept()
     pipeline = StreamingPipeline()
 
     try:
         while True:
-            data = await websocket.receive_json()
-            response = await pipeline.process_stream(data)
-            await manager.send_json(websocket, response)
+            message = await websocket.receive()
+
+            # AUDIO (binary)
+            if "bytes" in message and message["bytes"] is not None:
+                response = await pipeline.process_audio_bytes(message["bytes"])
+                if response:
+                    await websocket.send_json(response)
+
+            # TEXT (optional)
+            elif "text" in message and message["text"] is not None:
+                data = json.loads(message["text"])
+                response = await pipeline.process_stream(data)
+                await websocket.send_json(response)
 
     except WebSocketDisconnect:
-        manager.disconnect(websocket)
+        print("WebSocket disconnected")

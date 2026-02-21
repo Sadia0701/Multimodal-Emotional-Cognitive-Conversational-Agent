@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Multimodal Cognitive Agent - STT Test</title>
+</head>
+<body>
+
+<h2>Speech Interaction Test</h2>
+
+<button id="startBtn">Start Recording</button>
+<button id="stopBtn" disabled>Stop Recording</button>
+
+<pre id="output"></pre>
+
+<script>
+    const output = document.getElementById("output");
+    const startBtn = document.getElementById("startBtn");
+    const stopBtn = document.getElementById("stopBtn");
+
+    let mediaRecorder;
+    let audioChunks = [];
+
+    // Connect WebSocket
+    const ws = new WebSocket("ws://127.0.0.1:8000/ws/multimodal");
+
+    ws.onopen = () => {
+        output.innerHTML += "✅ Connected to backend\n";
+    };
+
+    ws.onmessage = (event) => {
+        output.innerHTML += "\n🧠 SERVER RESPONSE:\n" + event.data + "\n";
+    };
+
+    ws.onerror = (error) => {
+        output.innerHTML += "\n❌ WebSocket error\n";
+        console.error(error);
+    };
+
+    ws.onclose = () => {
+        output.innerHTML += "\n🔌 Connection closed\n";
+    };
+
+    // Start Recording
+    startBtn.onclick = async () => {
+        console.log("Start button clicked");
+
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            output.innerHTML += "🎤 Microphone access granted\n";
+
+            mediaRecorder = new MediaRecorder(stream);
+            audioChunks = [];
+
+            mediaRecorder.ondataavailable = (event) => {
+                if (event.data.size > 0) {
+                    audioChunks.push(event.data);
+                }
+            };
+
+            mediaRecorder.onstop = async () => {
+                output.innerHTML += "⏳ Sending audio to backend...\n";
+
+                const blob = new Blob(audioChunks, { type: "audio/webm" });
+                const arrayBuffer = await blob.arrayBuffer();
+
+                ws.send(arrayBuffer);
+            };
+
+            mediaRecorder.start();
+
+            startBtn.disabled = true;
+            stopBtn.disabled = false;
+
+            output.innerHTML += "🔴 Recording...\n";
+
+        } catch (err) {
+            output.innerHTML += "❌ Microphone error: " + err.message + "\n";
+            console.error(err);
+        }
+    };
+
+    // Stop Recording
+    stopBtn.onclick = () => {
+        console.log("Stop button clicked");
+
+        mediaRecorder.stop();
+
+        startBtn.disabled = false;
+        stopBtn.disabled = true;
+
+        output.innerHTML += "🛑 Recording stopped\n";
+    };
+</script>
+
+</body>
+</html>
