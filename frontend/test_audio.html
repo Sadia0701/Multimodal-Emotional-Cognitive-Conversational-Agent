@@ -1,96 +1,100 @@
 <!DOCTYPE html>
 <html>
+
 <head>
     <title>Multimodal Cognitive Agent - STT Test</title>
 </head>
+
 <body>
 
-<h2>Speech Interaction Test</h2>
+    <h2>Speech Interaction Test</h2>
 
-<button id="startBtn">Start Recording</button>
-<button id="stopBtn" disabled>Stop Recording</button>
+    <button id="startBtn">Start Recording</button>
+    <button id="stopBtn" disabled>Stop Recording</button>
 
-<pre id="output"></pre>
+    <pre id="output"></pre>
 
-<script>
-    const output = document.getElementById("output");
-    const startBtn = document.getElementById("startBtn");
-    const stopBtn = document.getElementById("stopBtn");
+    <script>
+        const output = document.getElementById("output");
+        const startBtn = document.getElementById("startBtn");
+        const stopBtn = document.getElementById("stopBtn");
 
-    let mediaRecorder;
-    let audioChunks = [];
+        let mediaRecorder;
+        let audioChunks = [];
 
-    // Connect WebSocket
-    const ws = new WebSocket("ws://127.0.0.1:8000/ws/multimodal");
+        // Connect WebSocket
+        //const ws = new WebSocket("ws://127.0.0.1:8000/ws/multimodal");
+        const ws = new WebSocket("ws://10.104.112.32:8000/ws/multimodal");
 
-    ws.onopen = () => {
-        output.innerHTML += "✅ Connected to backend\n";
-    };
+        ws.onopen = () => {
+            output.innerHTML += "✅ Connected to backend\n";
+        };
 
-    ws.onmessage = (event) => {
-        output.innerHTML += "\n🧠 SERVER RESPONSE:\n" + event.data + "\n";
-    };
+        ws.onmessage = (event) => {
+            output.innerHTML += "\n🧠 SERVER RESPONSE:\n" + event.data + "\n";
+        };
 
-    ws.onerror = (error) => {
-        output.innerHTML += "\n❌ WebSocket error\n";
-        console.error(error);
-    };
+        ws.onerror = (error) => {
+            output.innerHTML += "\n❌ WebSocket error\n";
+            console.error(error);
+        };
 
-    ws.onclose = () => {
-        output.innerHTML += "\n🔌 Connection closed\n";
-    };
+        ws.onclose = () => {
+            output.innerHTML += "\n🔌 Connection closed\n";
+        };
 
-    // Start Recording
-    startBtn.onclick = async () => {
-        console.log("Start button clicked");
+        // Start Recording
+        startBtn.onclick = async () => {
+            console.log("Start button clicked");
 
-        try {
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            output.innerHTML += "🎤 Microphone access granted\n";
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                output.innerHTML += "🎤 Microphone access granted\n";
 
-            mediaRecorder = new MediaRecorder(stream);
-            audioChunks = [];
+                mediaRecorder = new MediaRecorder(stream);
+                audioChunks = [];
 
-            mediaRecorder.ondataavailable = (event) => {
-                if (event.data.size > 0) {
-                    audioChunks.push(event.data);
-                }
-            };
+                mediaRecorder.ondataavailable = (event) => {
+                    if (event.data.size > 0) {
+                        audioChunks.push(event.data);
+                    }
+                };
 
-            mediaRecorder.onstop = async () => {
-                output.innerHTML += "⏳ Sending audio to backend...\n";
+                mediaRecorder.onstop = async () => {
+                    output.innerHTML += "⏳ Sending audio to backend...\n";
 
-                const blob = new Blob(audioChunks, { type: "audio/webm" });
-                const arrayBuffer = await blob.arrayBuffer();
+                    const blob = new Blob(audioChunks, { type: "audio/webm" });
+                    const arrayBuffer = await blob.arrayBuffer();
 
-                ws.send(arrayBuffer);
-            };
+                    ws.send(arrayBuffer);
+                };
 
-            mediaRecorder.start();
+                mediaRecorder.start();
 
-            startBtn.disabled = true;
-            stopBtn.disabled = false;
+                startBtn.disabled = true;
+                stopBtn.disabled = false;
 
-            output.innerHTML += "🔴 Recording...\n";
+                output.innerHTML += "🔴 Recording...\n";
 
-        } catch (err) {
-            output.innerHTML += "❌ Microphone error: " + err.message + "\n";
-            console.error(err);
-        }
-    };
+            } catch (err) {
+                output.innerHTML += "❌ Microphone error: " + err.message + "\n";
+                console.error(err);
+            }
+        };
 
-    // Stop Recording
-    stopBtn.onclick = () => {
-        console.log("Stop button clicked");
+        // Stop Recording
+        stopBtn.onclick = () => {
+            console.log("Stop button clicked");
 
-        mediaRecorder.stop();
+            mediaRecorder.stop();
 
-        startBtn.disabled = false;
-        stopBtn.disabled = true;
+            startBtn.disabled = false;
+            stopBtn.disabled = true;
 
-        output.innerHTML += "🛑 Recording stopped\n";
-    };
-</script>
+            output.innerHTML += "🛑 Recording stopped\n";
+        };
+    </script>
 
 </body>
+
 </html>
