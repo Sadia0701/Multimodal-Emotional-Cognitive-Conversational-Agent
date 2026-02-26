@@ -23,8 +23,13 @@
         let audioChunks = [];
 
         // Connect WebSocket
+        //websocket url for frontend and backend on same pc
         //const ws = new WebSocket("ws://127.0.0.1:8000/ws/multimodal");
-        const ws = new WebSocket("ws://10.104.112.32:8000/ws/multimodal");
+        //websocket url for frontend on laptop & backend on GPU PC
+          const ws = new WebSocket("ws://10.104.112.32:8000/ws/multimodal");
+        
+       
+    //const ws = new WebSocket("ws:// 192.168.56.1:8000/ws/multimodal");
 
         ws.onopen = () => {
             output.innerHTML += "✅ Connected to backend\n";
