@@ -1,4 +1,4 @@
-from app.cognitive.cognitive_controller import CognitiveController
+'''from app.cognitive.cognitive_controller import CognitiveController
 from app.multimodal.fusion_engine import MultimodalFusion
 from app.multimodal.stt_service import STTService
 
@@ -78,3 +78,87 @@ async def process_audio_bytes(self, audio_bytes: bytes):
     }
 
     return await self.process_stream(data)    
+'''
+from app.cognitive.cognitive_controller import CognitiveController
+from app.multimodal.fusion_engine import MultimodalFusion
+from app.multimodal.stt_service import STTService
+
+import asyncio
+import tempfile
+import os
+
+
+class StreamingPipeline:
+
+    def __init__(self):
+        self.controller = CognitiveController()
+        self.fusion = MultimodalFusion()
+        self.stt = STTService()
+        self.audio_buffer = b''
+
+    async def process_stream(self, data: dict):
+
+        # TEXT INPUT
+        if data.get("type") == "text":
+            fused_input = self.fusion.fuse(data)
+            return await self._run_cognitive(fused_input)
+
+        # AUDIO CHUNK INPUT (real-time streaming mode)
+        elif data.get("type") == "audio_chunk":
+
+            chunk = bytes.fromhex(data["data"])
+            self.audio_buffer += chunk
+
+            if len(self.audio_buffer) > 32000:
+
+                with tempfile.NamedTemporaryFile(delete=False, suffix=".webm") as tmp:
+                    tmp.write(self.audio_buffer)
+                    tmp_path = tmp.name
+
+                transcription = self.stt.transcribe_audio(tmp_path)
+                os.remove(tmp_path)
+                self.audio_buffer = b''
+
+                fused_input = self.fusion.fuse({
+                    "text": transcription,
+                    "face_emotion": data.get("face_emotion", "neutral")
+                })
+
+                return await self._run_cognitive(fused_input)
+
+            return {"status": "buffering_audio"}
+
+    async def process_audio_bytes(self, audio_bytes: bytes):
+
+        # Save clean audio file
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".webm") as tmp:
+            tmp.write(audio_bytes)
+            tmp_path = tmp.name
+
+        # GPU Transcription
+        transcription = self.stt.transcribe_audio(tmp_path)
+
+        # Remove temp file
+        os.remove(tmp_path)
+
+        if not transcription:
+            return {"status": "no_speech_detected"}
+
+        # Build structured perception input
+        data = {
+            "type": "text",  # IMPORTANT
+            "text": transcription,
+            "face_emotion": "neutral",
+            "voice_emotion": None
+        }
+
+        return await self.process_stream(data)
+
+    async def _run_cognitive(self, fused_input):
+        loop = asyncio.get_event_loop()
+        result = await loop.run_in_executor(
+            None,
+            self.controller.process_input,
+            fused_input
+        )
+        return result
