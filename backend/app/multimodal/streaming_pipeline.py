@@ -1,4 +1,5 @@
-'''from app.cognitive.cognitive_controller import CognitiveController
+'''Version 1
+from app.cognitive.cognitive_controller import CognitiveController
 from app.multimodal.fusion_engine import MultimodalFusion
 from app.multimodal.stt_service import STTService
 
@@ -79,6 +80,8 @@ async def process_audio_bytes(self, audio_bytes: bytes):
 
     return await self.process_stream(data)    
 '''
+
+'''Version 2
 from app.cognitive.cognitive_controller import CognitiveController
 from app.multimodal.fusion_engine import MultimodalFusion
 from app.multimodal.stt_service import STTService
@@ -153,6 +156,93 @@ class StreamingPipeline:
         }
 
         return await self.process_stream(data)
+
+    async def _run_cognitive(self, fused_input):
+        loop = asyncio.get_event_loop()
+        result = await loop.run_in_executor(
+            None,
+            self.controller.process_input,
+            fused_input
+        )
+        return result
+
+'''
+#Version 3
+# app/multimodal/streaming_pipeline.py
+
+from app.cognitive.cognitive_controller import CognitiveController
+from app.multimodal.fusion_engine import MultimodalFusion
+from app.multimodal.stt_service import STTService
+
+import asyncio
+import tempfile
+import os
+import time
+
+
+class StreamingPipeline:
+
+    def __init__(self):
+        self.controller = CognitiveController()
+        self.fusion = MultimodalFusion()
+        self.stt = STTService()
+
+        self.audio_buffer = b''
+        self.last_audio_time = time.time()
+
+    async def process_stream(self, data: dict):
+
+        # -------------------------
+        # TEXT INPUT (already supported)
+        # -------------------------
+        if data.get("type") == "text":
+            fused_input = self.fusion.fuse(data)
+            return await self._run_cognitive(fused_input)
+
+        # -------------------------
+        # AUDIO STREAMING INPUT
+        # -------------------------
+        elif data.get("type") == "audio_chunk":
+
+            # Convert hex back to bytes
+            chunk = bytes.fromhex(data["data"])
+            self.audio_buffer += chunk
+            self.last_audio_time = time.time()
+
+            # Wait until minimum buffer size (~1 sec audio)
+            if len(self.audio_buffer) < 16000:
+                return {"status": "buffering"}
+
+            # Save temporary audio file
+            with tempfile.NamedTemporaryFile(delete=False, suffix=".webm") as tmp:
+                tmp.write(self.audio_buffer)
+                tmp_path = tmp.name
+
+            # Transcribe with GPU Whisper
+            transcription = self.stt.transcribe_audio(tmp_path)
+
+            os.remove(tmp_path)
+
+            # Silence detection
+            if not transcription.strip():
+                return {"status": "silence"}
+
+            # Reset buffer after meaningful speech
+            self.audio_buffer = b''
+
+            # Build multimodal perception input
+            perception_input = {
+                "type": "text",
+                "text": transcription,
+                "face_emotion": data.get("face_emotion", "neutral"),
+                "voice_emotion": None
+            }
+
+            fused_input = self.fusion.fuse(perception_input)
+
+            return await self._run_cognitive(fused_input)
+
+        return {"status": "unknown_input"}
 
     async def _run_cognitive(self, fused_input):
         loop = asyncio.get_event_loop()

@@ -1,106 +1,108 @@
 <!DOCTYPE html>
 <html>
-
 <head>
-    <title>Multimodal Cognitive Agent - STT Test</title>
+    <title>Multimodal Cognitive Agent</title>
 </head>
-
 <body>
 
-    <h2>Speech Interaction Test</h2>
+<h2>Streaming Speech Interaction</h2>
 
-    <button id="startBtn">Start Recording</button>
-    <button id="stopBtn" disabled>Stop Recording</button>
+<button id="startBtn">Start Streaming</button>
+<button id="stopBtn">Stop Streaming</button>
 
-    <pre id="output"></pre>
+<p id="status"></p>
+<pre id="output"></pre>
 
-    <script>
-        const output = document.getElementById("output");
-        const startBtn = document.getElementById("startBtn");
-        const stopBtn = document.getElementById("stopBtn");
+<script>
 
-        let mediaRecorder;
-        let audioChunks = [];
+const status = document.getElementById("status");
+const output = document.getElementById("output");
 
-        // Connect WebSocket
-        //websocket url for frontend and backend on same pc
-        //const ws = new WebSocket("ws://127.0.0.1:8000/ws/multimodal");
-        //websocket url for frontend on laptop & backend on GPU PC
-          const ws = new WebSocket("ws://10.104.112.32:8000/ws/multimodal");
-          
-        
-       
-    //const ws = new WebSocket("ws:// 192.168.56.1:8000/ws/multimodal");
+let ws;
+let mediaRecorder;
+let stream;
 
-        ws.onopen = () => {
-            output.innerHTML += "✅ Connected to backend\n";
-        };
+function connectWebSocket() {
+    ws = new WebSocket("ws://10.104.112.32:8000/ws/multimodal");
 
-        ws.onmessage = (event) => {
-            output.innerHTML += "\n🧠 SERVER RESPONSE:\n" + event.data + "\n";
-        };
+    ws.onopen = () => {
+        status.innerText = "✅ Connected to backend";
+    };
 
-        ws.onerror = (error) => {
-            output.innerHTML += "\n❌ WebSocket error\n";
-            console.error(error);
-        };
+    ws.onmessage = (event) => {
+        output.innerText = "🧠 SERVER RESPONSE:\n" + event.data;
+    };
 
-        ws.onclose = () => {
-            output.innerHTML += "\n🔌 Connection closed\n";
-        };
+    ws.onclose = () => {
+        status.innerText = "❌ Connection closed";
+    };
 
-        // Start Recording
-        startBtn.onclick = async () => {
-            console.log("Start button clicked");
+    ws.onerror = (err) => {
+        console.error(err);
+        status.innerText = "⚠ WebSocket error";
+    };
+}
 
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                output.innerHTML += "🎤 Microphone access granted\n";
+async function startStreaming() {
 
-                mediaRecorder = new MediaRecorder(stream);
-                audioChunks = [];
+    if (!ws || ws.readyState !== WebSocket.OPEN) {
+        connectWebSocket();
+        await new Promise(r => setTimeout(r, 1000));
+    }
 
-                mediaRecorder.ondataavailable = (event) => {
-                    if (event.data.size > 0) {
-                        audioChunks.push(event.data);
-                    }
-                };
+    try {
+        stream = await navigator.mediaDevices.getUserMedia({ audio: true });
 
-                mediaRecorder.onstop = async () => {
-                    output.innerHTML += "⏳ Sending audio to backend...\n";
+        mediaRecorder = new MediaRecorder(stream, {
+            mimeType: "audio/webm"
+        });
 
-                    const blob = new Blob(audioChunks, { type: "audio/webm" });
-                    const arrayBuffer = await blob.arrayBuffer();
+        mediaRecorder.ondataavailable = async (event) => {
+            if (event.data.size > 0 && ws.readyState === WebSocket.OPEN) {
 
-                    ws.send(arrayBuffer);
-                };
+                const arrayBuffer = await event.data.arrayBuffer();
+                const byteArray = new Uint8Array(arrayBuffer);
 
-                mediaRecorder.start();
+                let hexString = "";
+                byteArray.forEach(b => {
+                    hexString += b.toString(16).padStart(2, "0");
+                });
 
-                startBtn.disabled = true;
-                stopBtn.disabled = false;
-
-                output.innerHTML += "🔴 Recording...\n";
-
-            } catch (err) {
-                output.innerHTML += "❌ Microphone error: " + err.message + "\n";
-                console.error(err);
+                ws.send(JSON.stringify({
+                    type: "audio_chunk",
+                    data: hexString
+                }));
             }
         };
 
-        // Stop Recording
-        stopBtn.onclick = () => {
-            console.log("Stop button clicked");
+        mediaRecorder.start(250); // send chunk every 250ms
 
-            mediaRecorder.stop();
+        status.innerText = "🔴 Streaming audio...";
+    }
+    catch (err) {
+        console.error(err);
+        status.innerText = "❌ Microphone error";
+    }
+}
 
-            startBtn.disabled = false;
-            stopBtn.disabled = true;
+function stopStreaming() {
+    if (mediaRecorder && mediaRecorder.state !== "inactive") {
+        mediaRecorder.stop();
+    }
 
-            output.innerHTML += "🛑 Recording stopped\n";
-        };
-    </script>
+    if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+    }
+
+    status.innerText = "🛑 Streaming stopped";
+}
+
+document.getElementById("startBtn").onclick = startStreaming;
+document.getElementById("stopBtn").onclick = stopStreaming;
+
+connectWebSocket();
+
+</script>
 
 </body>
-
 </html>
