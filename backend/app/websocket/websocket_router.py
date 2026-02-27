@@ -18,12 +18,20 @@ async def multimodal_websocket(websocket: WebSocket):
 
            message = await websocket.receive_text()
 
-            data = json.loads(message)
+           data = json.loads(message)
 
-            response = await pipeline.process_stream(data)
+           response = await pipeline.process_stream(data)
 
-            if response:
+           if response:
                 await websocket.send_json(response)
+
+    except WebSocketDisconnect:
+        print("WebSocket disconnected")
+
+    except Exception as e:
+        print("WebSocket error:", e)
+        await websocket.close()
+                    
     '''    message = await websocket.receive()
             
             # AUDIO (binary)
@@ -38,9 +46,4 @@ async def multimodal_websocket(websocket: WebSocket):
                 response = await pipeline.process_stream(data)
                 await websocket.send_json(response)
 '''
-    except WebSocketDisconnect:
-        print("WebSocket disconnected")
-
-    except Exception as e:
-        print("WebSocket error:", e)
-        await websocket.close()    
+        
