@@ -173,6 +173,7 @@ class StreamingPipeline:
 from app.cognitive.cognitive_controller import CognitiveController
 from app.multimodal.fusion_engine import MultimodalFusion
 from app.multimodal.stt_service import STTService
+from app.multimodal.facial_emotion_service import FacialEmotionService
 
 import asyncio
 import tempfile
@@ -193,7 +194,11 @@ class StreamingPipeline:
         self.silence_counter = 0
         self.speech_detected = False
 
-   #    self.audio_buffer = b''
+        #Facial emotion 
+        self.face_service = FacialEmotionService()
+        self.current_face_emotion = "neutral" 
+
+     #    self.audio_buffer = b''
     #   self.last_audio_time = time.time()
 
 
@@ -205,6 +210,17 @@ class StreamingPipeline:
         if data.get("type") == "text":
             fused_input = self.fusion.fuse(data)
             return await self._run_cognitive(fused_input)
+
+        # -------------------------
+        # VIDEO STREAMING INPUT
+        # -------------------------    
+
+        elif data.get("type") == "video_frame":
+
+            emotion = self.face_service.detect_emotion(data["data"])
+            self.current_face_emotion = emotion
+
+            return {"status": "face_updated"}    
 
         # -------------------------
         # AUDIO STREAMING INPUT
@@ -253,7 +269,8 @@ class StreamingPipeline:
                         perception_input = {
                             "type": "text",
                             "text": transcription,
-                            "face_emotion": data.get("face_emotion", "neutral"),
+                            #"face_emotion": data.get("face_emotion", "neutral"),
+                            "face_emotion": self.current_face_emotion,
                             "voice_emotion": None
                         }
 
@@ -262,6 +279,8 @@ class StreamingPipeline:
                         return await self._run_cognitive(fused_input)
 
                 return {"status": "silence"}
+
+        
 
     async def _run_cognitive(self, fused_input):
         loop = asyncio.get_event_loop()

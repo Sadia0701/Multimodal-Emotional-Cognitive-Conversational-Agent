@@ -10,6 +10,8 @@
 <button id="startBtn">Start Streaming</button>
 <button id="stopBtn">Stop Streaming</button>
 
+<video id="video" autoplay playsinline width="320" height="240"></video>
+
 <p id="status"></p>
 <pre id="output"></pre>
 
@@ -85,16 +87,55 @@ async function startStreaming() {
 
     input.connect(processor);
     processor.connect(audioContext.destination);
-
-    status.innerText = "🔴 Streaming (PCM mode)...";
+    
+    startCamera();
+    status.innerText = "🔴 Streaming ...";
+    
 }
 
 function stopStreaming() {
     if (processor) processor.disconnect();
     if (input) input.disconnect();
     if (audioContext) audioContext.close();
-
+    
+    stopCamera();
     status.innerText = "🛑 Streaming stopped";
+}
+
+let video;
+let faceInterval;
+
+async function startCamera() {
+
+    video = document.getElementById("video");
+
+    const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+    video.srcObject = stream;
+
+    faceInterval = setInterval(sendFrame, 800);
+}
+
+function stopCamera() {
+    clearInterval(faceInterval);
+}
+
+function sendFrame() {
+
+    if (!video || ws.readyState !== WebSocket.OPEN) return;
+
+    const canvas = document.createElement("canvas");
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+
+    const ctx = canvas.getContext("2d");
+    ctx.drawImage(video, 0, 0);
+
+    const imageData = canvas.toDataURL("image/jpeg", 0.6);
+
+    ws.send(JSON.stringify({
+        type: "video_frame",
+        data: imageData
+    }));
 }
 
 document.getElementById("startBtn").onclick = startStreaming;

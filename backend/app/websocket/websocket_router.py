@@ -24,6 +24,12 @@ async def multimodal_websocket(websocket: WebSocket):
 
            if response:
                 await websocket.send_json(response)
+           
+           elif data["type"] == "video_frame":
+                result = await pipeline.process_stream(data)
+                if result:
+                    await websocket.send_json(result)
+
 
     except WebSocketDisconnect:
         print("WebSocket disconnected")
@@ -31,7 +37,7 @@ async def multimodal_websocket(websocket: WebSocket):
     except Exception as e:
         print("WebSocket error:", e)
         await websocket.close()
-                    
+
     '''    message = await websocket.receive()
             
             # AUDIO (binary)
