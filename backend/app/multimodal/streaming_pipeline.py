@@ -187,8 +187,15 @@ class StreamingPipeline:
         self.fusion = MultimodalFusion()
         self.stt = STTService()
 
-        self.audio_buffer = b''
-        self.last_audio_time = time.time()
+        # VAD + Streaming state
+        import numpy as np
+        self.audio_buffer = np.array([], dtype=np.float32)
+        self.silence_counter = 0
+        self.speech_detected = False
+
+   #    self.audio_buffer = b''
+    #   self.last_audio_time = time.time()
+
 
     async def process_stream(self, data: dict):
 
@@ -204,40 +211,57 @@ class StreamingPipeline:
         # -------------------------
         elif data.get("type") == "audio_chunk":
 
-            # Convert list → numpy float32
             import numpy as np
 
             chunk = np.array(data["data"], dtype=np.float32)
 
-            if not hasattr(self, "audio_array"):
-                self.audio_array = np.array([], dtype=np.float32)
+            # Initialize state variables
+            if not hasattr(self, "audio_buffer"):
+                self.audio_buffer = np.array([], dtype=np.float32)
+                self.silence_counter = 0
+                self.speech_detected = False
 
-            self.audio_array = np.concatenate((self.audio_array, chunk))
+            # Simple energy-based VAD
+            energy = np.mean(np.abs(chunk))
 
-            # Wait until ~1 second audio (16000 samples)
-            if len(self.audio_array) < 16000:
-                return {"status": "buffering"}
+            SILENCE_THRESHOLD = 0.01
+            SILENCE_CHUNKS_TO_END = 8  # ~8 chunks ≈ ~1 sec silence
 
-            transcription = self.stt.transcribe_array(self.audio_array)
+            if energy > SILENCE_THRESHOLD:
+                self.speech_detected = True
+                self.silence_counter = 0
+                self.audio_buffer = np.concatenate((self.audio_buffer, chunk))
+                return {"status": "listening"}
 
-            if not transcription.strip():
+            else:
+                if self.speech_detected:
+                    self.silence_counter += 1
+
+                    if self.silence_counter >= SILENCE_CHUNKS_TO_END:
+
+                        # End of speech detected
+                        transcription = self.stt.transcribe_array(self.audio_buffer)
+
+                        # Reset state
+                        self.audio_buffer = np.array([], dtype=np.float32)
+                        self.silence_counter = 0
+                        self.speech_detected = False
+
+                        if not transcription.strip():
+                            return {"status": "silence"}
+
+                        perception_input = {
+                            "type": "text",
+                            "text": transcription,
+                            "face_emotion": data.get("face_emotion", "neutral"),
+                            "voice_emotion": None
+                        }
+
+                        fused_input = self.fusion.fuse(perception_input)
+
+                        return await self._run_cognitive(fused_input)
+
                 return {"status": "silence"}
-
-            # Reset buffer
-            self.audio_array = np.array([], dtype=np.float32)
-
-            perception_input = {
-                "type": "text",
-                "text": transcription,
-                "face_emotion": data.get("face_emotion", "neutral"),
-                "voice_emotion": None
-            }
-
-            fused_input = self.fusion.fuse(perception_input)
-
-            return await self._run_cognitive(fused_input)
-
-        return {"status": "unknown_input"}
 
     async def _run_cognitive(self, fused_input):
         loop = asyncio.get_event_loop()
