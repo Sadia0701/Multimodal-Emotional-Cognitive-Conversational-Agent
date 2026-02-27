@@ -33,7 +33,20 @@ function connectWebSocket() {
     };
 
     ws.onmessage = (event) => {
-        output.innerText = "🧠 SERVER RESPONSE:\n" + event.data;
+     // output.innerText = "🧠 SERVER RESPONSE:\n" + event.data;
+        const data = JSON.parse(event.data);
+
+        // Ignore buffering or silence updates
+        if (data.status) {
+            return;
+        }
+
+        // Only display full cognitive responses
+        if (data.generated_response) {
+            output.innerText =
+                "🧠 SERVER RESPONSE:\n\n" +
+                data.generated_response;
+        }
     };
 
     ws.onclose = () => {
