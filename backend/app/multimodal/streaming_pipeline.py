@@ -204,33 +204,28 @@ class StreamingPipeline:
         # -------------------------
         elif data.get("type") == "audio_chunk":
 
-            # Convert hex back to bytes
-            chunk = bytes.fromhex(data["data"])
-            self.audio_buffer += chunk
-            self.last_audio_time = time.time()
+            # Convert list → numpy float32
+            import numpy as np
 
-            # Wait until minimum buffer size (~1 sec audio)
-            if len(self.audio_buffer) < 16000:
+            chunk = np.array(data["data"], dtype=np.float32)
+
+            if not hasattr(self, "audio_array"):
+                self.audio_array = np.array([], dtype=np.float32)
+
+            self.audio_array = np.concatenate((self.audio_array, chunk))
+
+            # Wait until ~1 second audio (16000 samples)
+            if len(self.audio_array) < 16000:
                 return {"status": "buffering"}
 
-            # Save temporary audio file
-            with tempfile.NamedTemporaryFile(delete=False, suffix=".webm") as tmp:
-                tmp.write(self.audio_buffer)
-                tmp_path = tmp.name
+            transcription = self.stt.transcribe_array(self.audio_array)
 
-            # Transcribe with GPU Whisper
-            transcription = self.stt.transcribe_audio(tmp_path)
-
-            os.remove(tmp_path)
-
-            # Silence detection
             if not transcription.strip():
                 return {"status": "silence"}
 
-            # Reset buffer after meaningful speech
-            self.audio_buffer = b''
+            # Reset buffer
+            self.audio_array = np.array([], dtype=np.float32)
 
-            # Build multimodal perception input
             perception_input = {
                 "type": "text",
                 "text": transcription,

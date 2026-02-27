@@ -21,6 +21,9 @@ const output = document.getElementById("output");
 let ws;
 let mediaRecorder;
 let stream;
+let audioContext;
+let processor;
+let input;
 
 function connectWebSocket() {
     ws = new WebSocket("ws://10.104.112.32:8000/ws/multimodal");
@@ -45,62 +48,46 @@ function connectWebSocket() {
 
 async function startStreaming() {
 
-    if (!ws || ws.readyState !== WebSocket.OPEN) {
-        connectWebSocket();
-        await new Promise(r => setTimeout(r, 1000));
-    }
+    connectWebSocket();
 
-    try {
-        stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
 
-        mediaRecorder = new MediaRecorder(stream, {
-            mimeType: "audio/webm"
-        });
+    audioContext = new AudioContext({ sampleRate: 16000 });
 
-        mediaRecorder.ondataavailable = async (event) => {
-            if (event.data.size > 0 && ws.readyState === WebSocket.OPEN) {
+    input = audioContext.createMediaStreamSource(stream);
 
-                const arrayBuffer = await event.data.arrayBuffer();
-                const byteArray = new Uint8Array(arrayBuffer);
+    processor = audioContext.createScriptProcessor(4096, 1, 1);
 
-                let hexString = "";
-                byteArray.forEach(b => {
-                    hexString += b.toString(16).padStart(2, "0");
-                });
+    processor.onaudioprocess = (event) => {
 
-                ws.send(JSON.stringify({
-                    type: "audio_chunk",
-                    data: hexString
-                }));
-            }
-        };
+        const inputData = event.inputBuffer.getChannelData(0);
 
-        mediaRecorder.start(250); // send chunk every 250ms
+        if (ws.readyState === WebSocket.OPEN) {
+            ws.send(JSON.stringify({
+                type: "audio_chunk",
+                data: Array.from(inputData)
+            }));
+        }
+    };
 
-        status.innerText = "🔴 Streaming audio...";
-    }
-    catch (err) {
-        console.error(err);
-        status.innerText = "❌ Microphone error";
-    }
+    input.connect(processor);
+    processor.connect(audioContext.destination);
+
+    status.innerText = "🔴 Streaming (PCM mode)...";
 }
 
 function stopStreaming() {
-    if (mediaRecorder && mediaRecorder.state !== "inactive") {
-        mediaRecorder.stop();
-    }
-
-    if (stream) {
-        stream.getTracks().forEach(track => track.stop());
-    }
+    if (processor) processor.disconnect();
+    if (input) input.disconnect();
+    if (audioContext) audioContext.close();
 
     status.innerText = "🛑 Streaming stopped";
 }
 
-document.getElementById("startBtn").onclick = startStreaming;
-document.getElementById("stopBtn").onclick = stopStreaming;
+//document.getElementById("startBtn").onclick = startStreaming;
+//document.getElementById("stopBtn").onclick = stopStreaming;
 
-connectWebSocket();
+//connectWebSocket();
 
 </script>
 

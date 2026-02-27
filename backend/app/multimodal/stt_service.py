@@ -31,7 +31,7 @@ class STTService:
         return text.strip()
 
 '''
-
+'''
 #Version 2
 # app/multimodal/stt_service.py
 
@@ -88,5 +88,42 @@ class STTService:
             text += segment.text + " "
 
         os.remove(wav_path)
+
+        return text.strip()
+
+'''
+
+#Version 3
+# app/multimodal/stt_service.py
+
+from faster_whisper import WhisperModel
+import numpy as np
+
+
+class STTService:
+
+    def __init__(self):
+
+        print("Loading Whisper medium on GPU...")
+
+        self.model = WhisperModel(
+            "medium",
+            device="cuda",
+            compute_type="float16"
+        )
+
+        print("Whisper ready.")
+
+    def transcribe_array(self, audio_array):
+
+        segments, info = self.model.transcribe(
+            audio_array,
+            beam_size=5,
+            vad_filter=True
+        )
+
+        text = ""
+        for segment in segments:
+            text += segment.text + " "
 
         return text.strip()
