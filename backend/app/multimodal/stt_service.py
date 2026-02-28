@@ -104,6 +104,15 @@ class STTService:
 
     def __init__(self):
 
+        print("Loading Whisper base/small on CPU...")
+
+        self.model = WhisperModel(
+            "base", #lighter model for cpu
+            device="cpu",
+            compute_type="int8"
+        )
+
+'''Whisper when using GPU
         print("Loading Whisper medium on GPU...")
 
         self.model = WhisperModel(
@@ -111,7 +120,7 @@ class STTService:
             device="cuda",
             compute_type="float16"
         )
-
+'''
         print("Whisper ready.")
 
     def transcribe_array(self, audio_array):
