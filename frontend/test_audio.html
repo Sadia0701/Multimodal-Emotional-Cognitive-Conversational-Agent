@@ -1,149 +1,152 @@
 <!DOCTYPE html>
 <html>
+
 <head>
     <title>Multimodal Cognitive Agent</title>
 </head>
+
 <body>
 
-<h2>Streaming Speech Interaction</h2>
+    <h2>Streaming Speech Interaction</h2>
 
-<button id="startBtn">Start Streaming</button>
-<button id="stopBtn">Stop Streaming</button>
+    <button id="startBtn">Start Streaming</button>
+    <button id="stopBtn">Stop Streaming</button>
 
-<video id="video" autoplay playsinline width="320" height="240"></video>
+    <video id="video" autoplay playsinline width="320" height="240"></video>
 
-<p id="status"></p>
-<pre id="output"></pre>
+    <p id="status"></p>
+    <pre id="output"></pre>
 
-<script>
+    <script>
 
-const status = document.getElementById("status");
-const output = document.getElementById("output");
+        const status = document.getElementById("status");
+        const output = document.getElementById("output");
 
-let ws;
-let mediaRecorder;
-let stream;
-let audioContext;
-let processor;
-let input;
+        let ws;
+        let mediaRecorder;
+        let stream;
+        let audioContext;
+        let processor;
+        let input;
 
-function connectWebSocket() {
-    ws = new WebSocket("ws://10.104.112.32:8000/ws/multimodal");
+        function connectWebSocket() {
+            ws = new WebSocket("ws://10.104.112.32:8000/ws/multimodal");
 
-    ws.onopen = () => {
-        status.innerText = "✅ Connected to backend";
-    };
+            ws.onopen = () => {
+                status.innerText = "✅ Connected to backend";
+            };
 
-    ws.onmessage = (event) => {
-     // output.innerText = "🧠 SERVER RESPONSE:\n" + event.data;
-        const data = JSON.parse(event.data);
+            ws.onmessage = (event) => {
+                // output.innerText = "🧠 SERVER RESPONSE:\n" + event.data;
+                const data = JSON.parse(event.data);
 
-        // Ignore buffering or silence updates
-        if (data.status) {
-            return;
+                // Ignore buffering or silence updates
+                if (data.status) {
+                    return;
+                }
+
+                // Only display full cognitive responses
+                if (data.generated_response) {
+                    output.innerText =
+                        "🧠 SERVER RESPONSE:\n\n" +
+                        data.generated_response;
+                }
+            };
+
+            ws.onclose = () => {
+                status.innerText = "❌ Connection closed";
+            };
+
+            ws.onerror = (err) => {
+                console.error(err);
+                status.innerText = "⚠ WebSocket error";
+            };
         }
 
-        // Only display full cognitive responses
-        if (data.generated_response) {
-            output.innerText =
-                "🧠 SERVER RESPONSE:\n\n" +
-                data.generated_response;
+        async function startStreaming() {
+
+            connectWebSocket();
+
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+
+            audioContext = new AudioContext({ sampleRate: 16000 });
+
+            input = audioContext.createMediaStreamSource(stream);
+
+            processor = audioContext.createScriptProcessor(4096, 1, 1);
+
+            processor.onaudioprocess = (event) => {
+
+                const inputData = event.inputBuffer.getChannelData(0);
+
+                if (ws.readyState === WebSocket.OPEN) {
+                    ws.send(JSON.stringify({
+                        type: "audio_chunk",
+                        data: Array.from(inputData)
+                    }));
+                }
+            };
+
+            input.connect(processor);
+            processor.connect(audioContext.destination);
+
+            startCamera();
+            status.innerText = "🔴 Streaming ...";
+
         }
-    };
 
-    ws.onclose = () => {
-        status.innerText = "❌ Connection closed";
-    };
+        function stopStreaming() {
+            if (processor) processor.disconnect();
+            if (input) input.disconnect();
+            if (audioContext) audioContext.close();
 
-    ws.onerror = (err) => {
-        console.error(err);
-        status.innerText = "⚠ WebSocket error";
-    };
-}
+            stopCamera();
+            status.innerText = "🛑 Streaming stopped";
+        }
 
-async function startStreaming() {
+        let video;
+        let faceInterval;
 
-    connectWebSocket();
+        async function startCamera() {
 
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            video = document.getElementById("video");
 
-    audioContext = new AudioContext({ sampleRate: 16000 });
+            const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+            video.srcObject = stream;
 
-    input = audioContext.createMediaStreamSource(stream);
+            faceInterval = setInterval(sendFrame, 800);
+        }
 
-    processor = audioContext.createScriptProcessor(4096, 1, 1);
+        function stopCamera() {
+            clearInterval(faceInterval);
+        }
 
-    processor.onaudioprocess = (event) => {
+        function sendFrame() {
 
-        const inputData = event.inputBuffer.getChannelData(0);
+            if (!video || ws.readyState !== WebSocket.OPEN) return;
 
-        if (ws.readyState === WebSocket.OPEN) {
+            const canvas = document.createElement("canvas");
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+
+            const ctx = canvas.getContext("2d");
+            ctx.drawImage(video, 0, 0);
+
+            const imageData = canvas.toDataURL("image/jpeg", 0.6);
+
             ws.send(JSON.stringify({
-                type: "audio_chunk",
-                data: Array.from(inputData)
+                type: "video_frame",
+                data: imageData
             }));
         }
-    };
 
-    input.connect(processor);
-    processor.connect(audioContext.destination);
-    
-    startCamera();
-    status.innerText = "🔴 Streaming ...";
-    
-}
+        document.getElementById("startBtn").onclick = startStreaming;
+        document.getElementById("stopBtn").onclick = stopStreaming;
 
-function stopStreaming() {
-    if (processor) processor.disconnect();
-    if (input) input.disconnect();
-    if (audioContext) audioContext.close();
-    
-    stopCamera();
-    status.innerText = "🛑 Streaming stopped";
-}
+        connectWebSocket();
 
-let video;
-let faceInterval;
-
-async function startCamera() {
-
-    video = document.getElementById("video");
-
-    const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-    video.srcObject = stream;
-
-    faceInterval = setInterval(sendFrame, 800);
-}
-
-function stopCamera() {
-    clearInterval(faceInterval);
-}
-
-function sendFrame() {
-
-    if (!video || ws.readyState !== WebSocket.OPEN) return;
-
-    const canvas = document.createElement("canvas");
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-
-    const ctx = canvas.getContext("2d");
-    ctx.drawImage(video, 0, 0);
-
-    const imageData = canvas.toDataURL("image/jpeg", 0.6);
-
-    ws.send(JSON.stringify({
-        type: "video_frame",
-        data: imageData
-    }));
-}
-
-document.getElementById("startBtn").onclick = startStreaming;
-document.getElementById("stopBtn").onclick = stopStreaming;
-
-connectWebSocket();
-
-</script>
+    </script>
 
 </body>
+
 </html>
