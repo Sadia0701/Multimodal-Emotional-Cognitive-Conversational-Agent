@@ -68,6 +68,11 @@
                         "Gesture: " + data.gesture + "\n" +
                         "Speaking Speed: " + data.speaking_speed;
                 }
+                //To play audio in frontend
+                if (data.audio_file) {
+                    const audio = new Audio("data:audio/wav;base64," + data.audio_file);
+                    audio.play();
+}
             };
 
             ws.onclose = () => {

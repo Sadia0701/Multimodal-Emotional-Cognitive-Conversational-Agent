@@ -174,6 +174,7 @@ from app.cognitive.cognitive_controller import CognitiveController
 from app.multimodal.fusion_engine import MultimodalFusion
 from app.multimodal.stt_service import STTService
 from app.multimodal.facial_emotion_service import FacialEmotionService
+from app.multimodal.tts_service import TTSService
 
 import asyncio
 import tempfile
@@ -236,8 +237,10 @@ class StreamingPipeline:
                 self.audio_buffer = np.array([], dtype=np.float32)
                 self.silence_counter = 0
                 self.speech_detected = False
+                self.tts_service = TTSService()
+                
 
-            # Simple energy-based VAD
+            # Simple energy-based VAD(Voice Activity Detection)
             energy = np.mean(np.abs(chunk))
 
             SILENCE_THRESHOLD = 0.01
@@ -289,4 +292,21 @@ class StreamingPipeline:
             self.controller.process_input,
             fused_input
         )
+
+        # Generate speech audio
+        audio_file = self.tts_service.synthesize(
+            text=result["text"],
+            speaking_speed=result["speaking_speed"]
+        )
+
+        result["audio_file"] = audio_file
+
         return result
+        '''
+        result = await loop.run_in_executor(
+            None,
+            self.controller.process_input,
+            fused_input
+        )
+        return result
+        '''
