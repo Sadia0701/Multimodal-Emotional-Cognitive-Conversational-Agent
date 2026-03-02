@@ -7,10 +7,18 @@
 
 <body>
 
-    <h2>Streaming Speech Interaction</h2>
+    <h2>Multimodal Cognitive Agent</h2>
 
     <button id="startBtn">Start Streaming</button>
     <button id="stopBtn">Stop Streaming</button>
+
+    <br><br>
+
+    <!-- TEXT INPUT MODULE -->
+    <input type="text" id="textInput" placeholder="Type your message..." />
+    <button onclick="sendText()">Send</button>
+
+    <br><br>
 
     <video id="video" autoplay playsinline width="320" height="240"></video>
 
@@ -23,13 +31,19 @@
         const output = document.getElementById("output");
 
         let ws;
-        let mediaRecorder;
-        let stream;
         let audioContext;
         let processor;
         let input;
+        let video;
+        let faceInterval;
 
+        let currentFaceEmotion = "neutral"; // Optional future use
+
+        // ----------------------------
+        // CONNECT WEBSOCKET
+        // ----------------------------
         function connectWebSocket() {
+
             ws = new WebSocket("ws://10.104.112.32:8000/ws/multimodal");
 
             ws.onopen = () => {
@@ -37,19 +51,22 @@
             };
 
             ws.onmessage = (event) => {
-                // output.innerText = "🧠 SERVER RESPONSE:\n" + event.data;
+
                 const data = JSON.parse(event.data);
 
-                // Ignore buffering or silence updates
-                if (data.status) {
-                    return;
-                }
+                // Ignore streaming status updates
+                if (data.status) return;
 
-                // Only display full cognitive responses
-                if (data.generated_response) {
+                // Display structured cognitive output
+                if (data.text) {
                     output.innerText =
-                        "🧠 SERVER RESPONSE:\n\n" +
-                        data.generated_response;
+                        "🧠 AGENT RESPONSE\n\n" +
+                        "Text: " + data.text + "\n\n" +
+                        "Emotion: " + data.agent_emotion + "\n" +
+                        "Tone: " + data.tone + "\n" +
+                        "Facial Expression: " + data.facial_expression + "\n" +
+                        "Gesture: " + data.gesture + "\n" +
+                        "Speaking Speed: " + data.speaking_speed;
                 }
             };
 
@@ -63,6 +80,30 @@
             };
         }
 
+        // ----------------------------
+        // TEXT INPUT HANDLER
+        // ----------------------------
+        function sendText() {
+
+            const inputBox = document.getElementById("textInput");
+            const userTypedText = inputBox.value;
+
+            if (!userTypedText.trim()) return;
+
+            if (ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({
+                    type: "text",
+                    text: userTypedText,
+                    face_emotion: currentFaceEmotion
+                }));
+            }
+
+            inputBox.value = "";
+        }
+
+        // ----------------------------
+        // AUDIO STREAMING
+        // ----------------------------
         async function startStreaming() {
 
             connectWebSocket();
@@ -91,22 +132,24 @@
             processor.connect(audioContext.destination);
 
             startCamera();
-            status.innerText = "🔴 Streaming ...";
 
+            status.innerText = "🔴 Streaming ...";
         }
 
         function stopStreaming() {
+
             if (processor) processor.disconnect();
             if (input) input.disconnect();
             if (audioContext) audioContext.close();
 
             stopCamera();
+
             status.innerText = "🛑 Streaming stopped";
         }
 
-        let video;
-        let faceInterval;
-
+        // ----------------------------
+        // VIDEO STREAMING
+        // ----------------------------
         async function startCamera() {
 
             video = document.getElementById("video");
@@ -140,9 +183,13 @@
             }));
         }
 
+        // ----------------------------
+        // BUTTON EVENTS
+        // ----------------------------
         document.getElementById("startBtn").onclick = startStreaming;
         document.getElementById("stopBtn").onclick = stopStreaming;
 
+        // Initial connection
         connectWebSocket();
 
     </script>
