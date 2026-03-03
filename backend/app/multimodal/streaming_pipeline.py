@@ -188,6 +188,7 @@ class StreamingPipeline:
         self.controller = CognitiveController()
         self.fusion = MultimodalFusion()
         self.stt = STTService()
+        self.tts_service = TTSService()
 
         # VAD + Streaming state
         import numpy as np
