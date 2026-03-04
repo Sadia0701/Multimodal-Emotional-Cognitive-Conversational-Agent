@@ -2,11 +2,7 @@
 <html>
 
 <head>
-
 <title>Embodied Cognitive Agent</title>
-
-<script src="https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.152.2/examples/js/loaders/GLTFLoader.js"></script>
 
 <style>
 
@@ -53,9 +49,7 @@ margin:5px;
 
 <pre id="output"></pre>
 
-<div id="controls">
-
-<input type="text" id="textInput" placeholder="Type your message..." />
+<input type="text" id="textInput" placeholder="Type message"/>
 <button onclick="sendText()">Send</button>
 
 <br><br>
@@ -63,15 +57,19 @@ margin:5px;
 <button onclick="startStreaming()">Start Conversation</button>
 <button onclick="stopStreaming()">Stop</button>
 
-</div>
+
+<script type="module">
+
+import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.158.0/build/three.module.js";
+
+import { GLTFLoader } from
+"https://cdn.jsdelivr.net/npm/three@0.158.0/examples/jsm/loaders/GLTFLoader.js";
 
 
-<script>
-
-/* ------------------------
+/* -----------------------
 AVATAR RENDERING
--------------------------*/
-let ws = null;
+----------------------- */
+
 let scene, camera, renderer, avatar;
 
 function initAvatar(){
@@ -90,39 +88,53 @@ camera.position.z = 2;
 renderer = new THREE.WebGLRenderer({alpha:true});
 renderer.setSize(600,500);
 
-document.getElementById("avatarCanvas").appendChild(renderer.domElement);
+document
+.getElementById("avatarCanvas")
+.appendChild(renderer.domElement);
 
 
-/* Lighting */
+/* lighting */
 
-const hemiLight = new THREE.HemisphereLight(0xffffff,0x444444,1);
-scene.add(hemiLight);
+const hemi = new THREE.HemisphereLight(0xffffff,0x444444,1);
+scene.add(hemi);
 
-const dirLight = new THREE.DirectionalLight(0xffffff,1);
-dirLight.position.set(0,2,2);
-scene.add(dirLight);
+const dir = new THREE.DirectionalLight(0xffffff,1);
+dir.position.set(0,2,2);
+scene.add(dir);
 
 
-/* Load Avatar */
+/* load avatar */
 
 const loader = new GLTFLoader();
 
 loader.load(
-"avatar.glb",
+
+"./avatar.glb",
+
 function(gltf){
 
 avatar = gltf.scene;
 
-avatar.scale.set(1.2,1.2,1.2);
+avatar.scale.set(1.3,1.3,1.3);
 
 scene.add(avatar);
 
+},
+
+undefined,
+
+function(error){
+
+console.error("Avatar load error:",error);
+
 }
+
 );
 
 animate();
 
 }
+
 
 function animate(){
 
@@ -140,9 +152,9 @@ initAvatar();
 
 
 
-/* ------------------------
+/* -----------------------
 WEBCAM
--------------------------*/
+----------------------- */
 
 async function startCamera(){
 
@@ -158,18 +170,21 @@ startCamera();
 
 
 
-/* ------------------------
-WEBSOCKET CONNECTION
--------------------------*/
+/* -----------------------
+WEBSOCKET
+----------------------- */
 
-//let ws;
+let ws = null;
 
 function connectWebSocket(){
 
 ws = new WebSocket("ws://10.104.112.32:8000/ws/multimodal");
 
 ws.onopen = () => {
-document.getElementById("status").innerText = "✅ Connected to backend";
+
+document.getElementById("status").innerText =
+"Connected to backend";
+
 };
 
 ws.onmessage = (event) => {
@@ -181,7 +196,6 @@ if(data.status) return;
 if(data.text){
 
 document.getElementById("output").innerText =
-"Agent Response\n\n" +
 data.text;
 
 }
@@ -201,7 +215,7 @@ audio.play();
 ws.onclose = () => {
 
 document.getElementById("status").innerText =
-"Connection Closed";
+"Connection closed";
 
 };
 
@@ -209,11 +223,11 @@ document.getElementById("status").innerText =
 
 
 
-/* ------------------------
+/* -----------------------
 TEXT INPUT
--------------------------*/
+----------------------- */
 
-function sendText(){
+window.sendText = function(){
 
 const input = document.getElementById("textInput");
 
@@ -227,35 +241,30 @@ face_emotion:"neutral"
 
 }));
 
-input.value = "";
+input.value="";
 
 }
 
 
 
-/* ------------------------
+/* -----------------------
 START / STOP
--------------------------*/
+----------------------- */
 
-function startStreaming(){
+window.startStreaming = function(){
 
 connectWebSocket();
 
-document.getElementById("status").innerText =
-"Conversation Started";
-
 }
 
-function stopStreaming(){
+window.stopStreaming = function(){
 
 if(ws) ws.close();
-
-document.getElementById("status").innerText =
-"Conversation Stopped";
 
 }
 
 </script>
 
 </body>
+
 </html>
