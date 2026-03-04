@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+<title>Embodied Cognitive Agent</title>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.158.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.158.0/examples/js/loaders/GLTFLoader.js"></script>
+
+<style>
+
+body{
+font-family: Arial;
+background:#111;
+color:white;
+text-align:center;
+}
+
+#avatarCanvas{
+width:600px;
+height:500px;
+margin:auto;
+border:2px solid #444;
+}
+
+#video{
+width:220px;
+border:2px solid white;
+}
+
+#controls{
+margin-top:15px;
+}
+
+input{
+width:300px;
+padding:8px;
+}
+
+button{
+padding:8px 14px;
+margin-left:5px;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<h2>Embodied Cognitive Conversational Agent</h2>
+
+<div id="avatarCanvas"></div>
+
+<br>
+
+<video id="video" autoplay playsinline></video>
+
+<p id="status"></p>
+
+<pre id="output"></pre>
+
+<div id="controls">
+
+<input type="text" id="textInput" placeholder="Say something..." />
+<button onclick="sendText()">Send</button>
+
+<br><br>
+
+<button onclick="startStreaming()">Start Conversation</button>
+<button onclick="stopStreaming()">Stop</button>
+
+</div>
+
+<script>
+
+let scene, camera, renderer, avatar;
+
+function initAvatar(){
+
+scene = new THREE.Scene();
+
+camera = new THREE.PerspectiveCamera(
+45,
+600/500,
+0.1,
+1000
+);
+
+camera.position.z = 2;
+
+renderer = new THREE.WebGLRenderer({alpha:true});
+renderer.setSize(600,500);
+
+document.getElementById("avatarCanvas").appendChild(renderer.domElement);
+
+const light = new THREE.HemisphereLight(0xffffff,0x444444);
+scene.add(light);
+
+const loader = new THREE.GLTFLoader();
+
+loader.load(
+"https://models.readyplayer.me/64b3b8b33d1e6f7f6b6b3d9e.glb",
+function(gltf){
+
+avatar = gltf.scene;
+scene.add(avatar);
+
+}
+);
+
+animate();
+
+}
+
+function animate(){
+
+requestAnimationFrame(animate);
+
+if(avatar){
+avatar.rotation.y += 0.002;
+}
+
+renderer.render(scene,camera);
+
+}
+
+initAvatar();
+
+</script>
+
+</body>
+</html>

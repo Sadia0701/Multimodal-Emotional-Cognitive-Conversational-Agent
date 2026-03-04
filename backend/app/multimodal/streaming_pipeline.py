@@ -303,6 +303,9 @@ class StreamingPipeline:
 
         result["audio_file"] = audio_file
 
+        print("FINAL RESPONSE SENT TO FRONTEND:")
+        print(result)
+
         return result
         '''
         result = await loop.run_in_executor(

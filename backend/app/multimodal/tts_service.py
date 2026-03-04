@@ -43,35 +43,67 @@ class TTSService:
 
 # Piper TTS
 
-import base64
-import uuid
-import os
 from piper import PiperVoice
+import base64
+import io
+import wave
 
 
 class TTSService:
 
     def __init__(self):
-        self.model_path = "models/en_US-lessac-medium.onnx"
-        self.config_path = "models/en_US-lessac-medium.onnx.json"
+
+        print("Loading Piper TTS model...")
+
         self.voice = PiperVoice.load(
-            self.model_path,
-            config_path=self.config_path
+            "models/en_US-lessac-medium.onnx",
+            config_path="models/en_US-lessac-medium.onnx.json"
         )
 
+        print("Piper TTS ready.")
+
+
     def synthesize(self, text: str, speaking_speed: float = 1.0, tone: str = "neutral"):
-            print("TTS generating...")
-            print("Speed:", speaking_speed)
-            print("Tone:", tone)
 
-            output_file = f"temp_{uuid.uuid4()}.wav"
+        import io
+        import wave
+        import base64
+        import numpy as np
 
-            with open(output_file, "wb") as f:
-                self.voice.synthesize(text, f)
+        print("TTS generating...")
+        print("Speed:", speaking_speed)
+        print("Tone:", tone)
 
-            with open(output_file, "rb") as f:
-                audio_bytes = f.read()
+        audio_stream = self.voice.synthesize(text)
 
-            os.remove(output_file)
+        audio_bytes = b''
 
-            return base64.b64encode(audio_bytes).decode("utf-8")
+        for chunk in audio_stream:
+
+            if chunk.audio_int16_bytes is not None:
+                audio_bytes += chunk.audio_int16_bytes
+
+            elif chunk.audio_int16_array is not None:
+                audio_bytes += chunk.audio_int16_array.tobytes()
+
+            elif chunk.audio_float_array is not None:
+                int16_audio = (chunk.audio_float_array * 32767).astype(np.int16)
+                audio_bytes += int16_audio.tobytes()
+
+        print("Audio bytes length:", len(audio_bytes))
+
+        if len(audio_bytes) == 0:
+            print("⚠ Piper produced empty audio")
+            return ""
+
+        buffer = io.BytesIO()
+
+        with wave.open(buffer, "wb") as wav_file:
+            wav_file.setnchannels(1)
+            wav_file.setsampwidth(2)
+            wav_file.setframerate(22050)
+            wav_file.writeframes(audio_bytes)
+
+        encoded = base64.b64encode(buffer.getvalue()).decode("utf-8")
+
+        return encoded
