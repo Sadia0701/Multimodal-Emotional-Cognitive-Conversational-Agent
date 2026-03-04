@@ -71,7 +71,7 @@ margin:5px;
 /* ------------------------
 AVATAR RENDERING
 -------------------------*/
-
+let ws = null;
 let scene, camera, renderer, avatar;
 
 function initAvatar(){
@@ -105,7 +105,7 @@ scene.add(dirLight);
 
 /* Load Avatar */
 
-const loader = new THREE.GLTFLoader();
+const loader = new GLTFLoader();
 
 loader.load(
 "avatar.glb",
@@ -162,7 +162,7 @@ startCamera();
 WEBSOCKET CONNECTION
 -------------------------*/
 
-let ws;
+//let ws;
 
 function connectWebSocket(){
 
