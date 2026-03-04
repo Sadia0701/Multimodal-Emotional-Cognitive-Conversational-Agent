@@ -121,18 +121,29 @@ loader.load(
 
 function(gltf){
 
+console.log("Avatar loaded successfully");
+
 avatar = gltf.scene;
-avatar.scale.set(1.3,1.3,1.3);
+
+avatar.scale.set(1.5,1.5,1.5);
 
 scene.add(avatar);
 
 },
 
-undefined,
+function(progress){
+
+console.log(
+"Loading avatar:",
+(progress.loaded / progress.total) * 100,
+"%"
+);
+
+},
 
 function(error){
 
-console.error("Avatar load error:",error);
+console.error("Avatar failed to load:", error);
 
 }
 
@@ -161,17 +172,46 @@ initAvatar();
 
 /* ------------------ WEBCAM ------------------ */
 
-async function startCamera(){
+async function startMedia(){
+
+const stream = await navigator.mediaDevices.getUserMedia({
+video:true,
+audio:true
+});
 
 const video = document.getElementById("video");
 
-const stream = await navigator.mediaDevices.getUserMedia({video:true});
-
 video.srcObject = stream;
+
+/* audio streaming */
+
+const audioContext = new AudioContext({sampleRate:16000});
+
+const input = audioContext.createMediaStreamSource(stream);
+
+const processor = audioContext.createScriptProcessor(4096,1,1);
+
+processor.onaudioprocess = (event)=>{
+
+const inputData = event.inputBuffer.getChannelData(0);
+
+if(ws && ws.readyState === WebSocket.OPEN){
+
+ws.send(JSON.stringify({
+type:"audio_chunk",
+data:Array.from(inputData)
+}));
 
 }
 
-startCamera();
+};
+
+input.connect(processor);
+processor.connect(audioContext.destination);
+
+}
+
+startMedia();
 
 
 
