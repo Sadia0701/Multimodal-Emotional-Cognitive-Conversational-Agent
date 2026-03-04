@@ -7,9 +7,9 @@
 <style>
 
 body{
-font-family: Arial;
 background:#111;
 color:white;
+font-family:Arial;
 text-align:center;
 }
 
@@ -17,11 +17,11 @@ text-align:center;
 width:600px;
 height:500px;
 margin:auto;
-border:2px solid #444;
+border:2px solid #555;
 }
 
 #video{
-width:220px;
+width:200px;
 border:2px solid white;
 margin-top:10px;
 }
@@ -32,6 +32,17 @@ margin:5px;
 }
 
 </style>
+
+<!-- Import map fixes the "three" module error -->
+
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://unpkg.com/three@0.158.0/build/three.module.js",
+    "three/addons/": "https://unpkg.com/three@0.158.0/examples/jsm/"
+  }
+}
+</script>
 
 </head>
 
@@ -45,11 +56,9 @@ margin:5px;
 
 <video id="video" autoplay playsinline></video>
 
-<p id="status"></p>
+<br><br>
 
-<pre id="output"></pre>
-
-<input type="text" id="textInput" placeholder="Type message"/>
+<input type="text" id="textInput" placeholder="Type message">
 <button onclick="sendText()">Send</button>
 
 <br><br>
@@ -57,17 +66,17 @@ margin:5px;
 <button onclick="startStreaming()">Start Conversation</button>
 <button onclick="stopStreaming()">Stop</button>
 
+<p id="status"></p>
+<pre id="output"></pre>
+
 
 <script type="module">
 
-import * as THREE from "https://unpkg.com/three@0.158.0/build/three.module.js";
+import * as THREE from "three";
+import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 
-import { GLTFLoader } from "https://unpkg.com/three@0.158.0/examples/jsm/loaders/GLTFLoader.js";
 
-
-/* -----------------------
-AVATAR RENDERING
------------------------ */
+/* ------------------ AVATAR ------------------ */
 
 let scene, camera, renderer, avatar;
 
@@ -94,12 +103,12 @@ document
 
 /* lighting */
 
-const hemi = new THREE.HemisphereLight(0xffffff,0x444444,1);
-scene.add(hemi);
+const light1 = new THREE.HemisphereLight(0xffffff,0x444444,1);
+scene.add(light1);
 
-const dir = new THREE.DirectionalLight(0xffffff,1);
-dir.position.set(0,2,2);
-scene.add(dir);
+const light2 = new THREE.DirectionalLight(0xffffff,1);
+light2.position.set(0,2,2);
+scene.add(light2);
 
 
 /* load avatar */
@@ -113,7 +122,6 @@ loader.load(
 function(gltf){
 
 avatar = gltf.scene;
-
 avatar.scale.set(1.3,1.3,1.3);
 
 scene.add(avatar);
@@ -151,9 +159,7 @@ initAvatar();
 
 
 
-/* -----------------------
-WEBCAM
------------------------ */
+/* ------------------ WEBCAM ------------------ */
 
 async function startCamera(){
 
@@ -169,9 +175,7 @@ startCamera();
 
 
 
-/* -----------------------
-WEBSOCKET
------------------------ */
+/* ------------------ WEBSOCKET ------------------ */
 
 let ws = null;
 
@@ -222,9 +226,7 @@ document.getElementById("status").innerText =
 
 
 
-/* -----------------------
-TEXT INPUT
------------------------ */
+/* ------------------ TEXT INPUT ------------------ */
 
 window.sendText = function(){
 
@@ -246,9 +248,7 @@ input.value="";
 
 
 
-/* -----------------------
-START / STOP
------------------------ */
+/* ------------------ START / STOP ------------------ */
 
 window.startStreaming = function(){
 
