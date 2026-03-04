@@ -297,7 +297,8 @@ class StreamingPipeline:
         # Generate speech audio
         audio_file = self.tts_service.synthesize(
             text=result["text"],
-            speaking_speed=result["speaking_speed"]
+            speaking_speed=result.get("speaking_speed",1.0),
+            tone = result.get("tone","neutral")
         )
 
         result["audio_file"] = audio_file

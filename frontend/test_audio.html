@@ -54,11 +54,16 @@
 
                 const data = JSON.parse(event.data);
 
-                // Ignore streaming status updates
-                if (data.status) return;
+                // Ignore streaming updates
+                if (data.status) {
+                    return;
+                }
 
-                // Display structured cognitive output
+                console.log("SERVER DATA:", data);
+
+                // Display response text
                 if (data.text) {
+
                     output.innerText =
                         "🧠 AGENT RESPONSE\n\n" +
                         "Text: " + data.text + "\n\n" +
@@ -68,11 +73,18 @@
                         "Gesture: " + data.gesture + "\n" +
                         "Speaking Speed: " + data.speaking_speed;
                 }
-                //To play audio in frontend
+
+                // Play audio response
                 if (data.audio_file) {
-                    const audio = new Audio("data:audio/wav;base64," + data.audio_file);
-                    audio.play();
-}
+
+                    const audio = new Audio(
+                        "data:audio/wav;base64," + data.audio_file
+                    );
+
+                    audio.play().catch(err => {
+                        console.log("Audio play blocked:", err);
+                    });
+                }
             };
 
             ws.onclose = () => {
