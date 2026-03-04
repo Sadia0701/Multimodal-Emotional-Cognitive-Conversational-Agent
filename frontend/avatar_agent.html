@@ -2,6 +2,7 @@
 <html>
 
 <head>
+
 <title>Embodied Cognitive Agent</title>
 
 <script src="https://cdn.jsdelivr.net/npm/three@0.158.0/build/three.min.js"></script>
@@ -26,6 +27,7 @@ border:2px solid #444;
 #video{
 width:220px;
 border:2px solid white;
+margin-top:10px;
 }
 
 #controls{
@@ -39,7 +41,7 @@ padding:8px;
 
 button{
 padding:8px 14px;
-margin-left:5px;
+margin:5px;
 }
 
 </style>
@@ -62,7 +64,7 @@ margin-left:5px;
 
 <div id="controls">
 
-<input type="text" id="textInput" placeholder="Say something..." />
+<input type="text" id="textInput" placeholder="Type your message..." />
 <button onclick="sendText()">Send</button>
 
 <br><br>
@@ -72,7 +74,12 @@ margin-left:5px;
 
 </div>
 
+
 <script>
+
+/* ------------------------
+AVATAR RENDERING
+-------------------------*/
 
 let scene, camera, renderer, avatar;
 
@@ -94,16 +101,29 @@ renderer.setSize(600,500);
 
 document.getElementById("avatarCanvas").appendChild(renderer.domElement);
 
-const light = new THREE.HemisphereLight(0xffffff,0x444444);
-scene.add(light);
+
+/* Lighting */
+
+const hemiLight = new THREE.HemisphereLight(0xffffff,0x444444,1);
+scene.add(hemiLight);
+
+const dirLight = new THREE.DirectionalLight(0xffffff,1);
+dirLight.position.set(0,2,2);
+scene.add(dirLight);
+
+
+/* Load Avatar */
 
 const loader = new THREE.GLTFLoader();
 
 loader.load(
-avatar.glb,
+"avatar.glb",
 function(gltf){
 
 avatar = gltf.scene;
+
+avatar.scale.set(1.2,1.2,1.2);
+
 scene.add(avatar);
 
 }
@@ -126,6 +146,123 @@ renderer.render(scene,camera);
 }
 
 initAvatar();
+
+
+
+/* ------------------------
+WEBCAM
+-------------------------*/
+
+async function startCamera(){
+
+const video = document.getElementById("video");
+
+const stream = await navigator.mediaDevices.getUserMedia({video:true});
+
+video.srcObject = stream;
+
+}
+
+startCamera();
+
+
+
+/* ------------------------
+WEBSOCKET CONNECTION
+-------------------------*/
+
+let ws;
+
+function connectWebSocket(){
+
+ws = new WebSocket("ws://10.104.112.32:8000/ws/multimodal");
+
+ws.onopen = () => {
+document.getElementById("status").innerText = "✅ Connected to backend";
+};
+
+ws.onmessage = (event) => {
+
+const data = JSON.parse(event.data);
+
+if(data.status) return;
+
+if(data.text){
+
+document.getElementById("output").innerText =
+"Agent Response\n\n" +
+data.text;
+
+}
+
+if(data.audio_file){
+
+const audio = new Audio(
+"data:audio/wav;base64," + data.audio_file
+);
+
+audio.play();
+
+}
+
+};
+
+ws.onclose = () => {
+
+document.getElementById("status").innerText =
+"Connection Closed";
+
+};
+
+}
+
+
+
+/* ------------------------
+TEXT INPUT
+-------------------------*/
+
+function sendText(){
+
+const input = document.getElementById("textInput");
+
+if(!input.value.trim()) return;
+
+ws.send(JSON.stringify({
+
+type:"text",
+text:input.value,
+face_emotion:"neutral"
+
+}));
+
+input.value = "";
+
+}
+
+
+
+/* ------------------------
+START / STOP
+-------------------------*/
+
+function startStreaming(){
+
+connectWebSocket();
+
+document.getElementById("status").innerText =
+"Conversation Started";
+
+}
+
+function stopStreaming(){
+
+if(ws) ws.close();
+
+document.getElementById("status").innerText =
+"Conversation Stopped";
+
+}
 
 </script>
 
