@@ -33,8 +33,8 @@ margin:5px;
 
 </style>
 
-<!-- Import map fixes the "three" module error -->
 <link rel="icon" href="data:,">
+
 <script type="importmap">
 {
   "imports": {
@@ -75,10 +75,11 @@ margin:5px;
 import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 
-
 /* ------------------ AVATAR ------------------ */
 
 let scene, camera, renderer, avatar;
+
+let speaking = false;
 
 function initAvatar(){
 
@@ -127,9 +128,8 @@ avatar = gltf.scene;
 
 avatar.scale.set(1.2,1.2,1.2);
 
-/* move avatar upward so torso is centered */
-
 avatar.position.y = -1.1;
+
 camera.position.set(0,1,2);
 
 scene.add(avatar);
@@ -163,8 +163,21 @@ function animate(){
 
 requestAnimationFrame(animate);
 
-if(avatar){
-avatar.rotation.y += 0.002;
+/* -------- LIP SYNC -------- */
+
+if(avatar && speaking){
+
+avatar.traverse((child)=>{
+
+if(child.morphTargetInfluences){
+
+child.morphTargetInfluences[0] =
+Math.random()*0.5;
+
+}
+
+});
+
 }
 
 renderer.render(scene,camera);
@@ -175,7 +188,84 @@ initAvatar();
 
 
 
-/* ------------------ WEBCAM ------------------ */
+/* ------------------ EMOTION MAPPING ------------------ */
+
+function applyEmotion(emotion){
+
+if(!avatar) return;
+
+switch(emotion){
+
+case "happy":
+avatar.rotation.x = -0.05;
+break;
+
+case "sad":
+avatar.rotation.x = 0.1;
+break;
+
+case "angry":
+avatar.rotation.y = 0.1;
+break;
+
+case "fear":
+avatar.rotation.x = 0.05;
+break;
+
+default:
+avatar.rotation.x = 0;
+
+}
+
+}
+
+
+
+/* ------------------ GESTURE ANIMATION ------------------ */
+
+function performGesture(gesture){
+
+if(!avatar) return;
+
+switch(gesture){
+
+case "slight_nod":
+
+avatar.rotation.x = 0.2;
+
+setTimeout(()=>{
+avatar.rotation.x = 0;
+},400);
+
+break;
+
+case "slow_head_tilt":
+
+avatar.rotation.z = 0.2;
+
+setTimeout(()=>{
+avatar.rotation.z = 0;
+},800);
+
+break;
+
+case "lean_forward":
+
+camera.position.z = 1.8;
+
+setTimeout(()=>{
+camera.position.z = 2;
+},800);
+
+break;
+
+}
+
+}
+
+
+
+/* ------------------ WEBCAM + MIC ------------------ */
 
 async function startMedia(){
 
@@ -226,7 +316,7 @@ let ws = null;
 
 function connectWebSocket(){
 
-ws = new WebSocket("ws://10.104.112.32:8000/ws/multimodal");
+ws = new WebSocket("ws://127.0.0.1:8000/ws/multimodal");
 
 ws.onopen = () => {
 
@@ -248,11 +338,31 @@ data.text;
 
 }
 
+/* -------- Emotion + Gesture Trigger -------- */
+
+if(data.agent_emotion){
+applyEmotion(data.agent_emotion);
+}
+
+if(data.gesture){
+performGesture(data.gesture);
+}
+
+/* -------- TTS Playback + Lip Sync -------- */
+
 if(data.audio_file){
 
 const audio = new Audio(
 "data:audio/wav;base64," + data.audio_file
 );
+
+audio.onplay = ()=>{
+speaking = true;
+}
+
+audio.onended = ()=>{
+speaking = false;
+}
 
 audio.play();
 

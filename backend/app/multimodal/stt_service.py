@@ -103,15 +103,14 @@ import numpy as np
 class STTService:
 
     def __init__(self):
-
-       #Whisper when using GPU
-        print("Loading Whisper medium on GPU...")
+         
+        print("Loading Whisper base/small on CPU...")
 
         self.model = WhisperModel(
-            "medium",
-            device="cuda",
-            compute_type="float16"
-        )
+            "base", #lighter model for cpu
+            device="cpu",
+            compute_type="int8"
+        ) 
 
         print("Whisper ready.")
 
@@ -130,11 +129,12 @@ class STTService:
         return text.strip()
 
 """
-        print("Loading Whisper base/small on CPU...")
+       #Whisper when using GPU
+        print("Loading Whisper medium on GPU...")
 
         self.model = WhisperModel(
-            "base", #lighter model for cpu
-            device="cpu",
-            compute_type="int8"
+            "medium",
+            device="cuda",
+            compute_type="float16"
         )
 """

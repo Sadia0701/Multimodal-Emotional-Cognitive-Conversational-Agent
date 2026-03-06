@@ -44,7 +44,9 @@
         // ----------------------------
         function connectWebSocket() {
 
-            ws = new WebSocket("ws://10.104.112.32:8000/ws/multimodal");
+            //ws = new WebSocket("ws://10.104.112.32:8000/ws/multimodal");
+
+            ws = new WebSocket("ws://127.0.0.1:8000/ws/multimodal");
 
             ws.onopen = () => {
                 status.innerText = "✅ Connected to backend";
