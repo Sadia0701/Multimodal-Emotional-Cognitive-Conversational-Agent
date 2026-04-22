@@ -179,8 +179,10 @@ let ws=null;
 let speaking=false;
 let listening=false;
 let thinking=false;
+let isAgentSpeaking=false;
 
-let isAgentSpeaking = false;
+let started=false;
+let mediaStarted=false;
 
 let headBone=null;
 let spineBone=null;
@@ -190,6 +192,7 @@ let rightArm=null;
 let faceMeshes=[];
 
 let t=0;
+let faceInterval=null;
 
 /* ------------------------------------ */
 /* INIT */
@@ -209,7 +212,9 @@ camera = new THREE.PerspectiveCamera(
 );
 
 /* Bust + visible hands framing */
-camera.position.set(0,1.55,1.7);
+//Camera position to centre avatar
+camera.position.set(0,1.55,2.85);
+camera.lookAt(0,1.35,0);
 
 renderer = new THREE.WebGLRenderer({
 alpha:true,
@@ -274,8 +279,9 @@ loader.load(
 avatar = gltf.scene;
 
 /* Bigger + centered */
+//Avatar Load Positioning - Adjust as needed based on your model's original scale and position
 avatar.scale.set(1.45,1.45,1.45);
-avatar.position.set(0,-1.45,0);
+avatar.position.set(0,-0.78,0);
 
 scene.add(avatar);
 
@@ -549,13 +555,13 @@ spineBone.rotation.x = 0;
 function talkGesture(){
 
 if(leftArm){
-leftArm.rotation.z =
-Math.sin(t*4)*0.15;
+leftArm.rotation.z = Math.sin(t*3)*0.04;
+leftArm.rotation.x = 0.05;
 }
 
 if(rightArm){
-rightArm.rotation.z =
--Math.sin(t*4)*0.15;
+rightArm.rotation.z = -Math.sin(t*3)*0.04;
+rightArm.rotation.x = 0.05;
 }
 
 }
@@ -585,37 +591,34 @@ rightArm.rotation.set(0,0,0);
 
 async function startMedia(){
 
-const stream =
-await navigator.mediaDevices.getUserMedia({
+if(mediaStarted) return;
+mediaStarted = true;
 
+const stream = await navigator.mediaDevices.getUserMedia({
 video:true,
-
 audio:{
 echoCancellation:true,
 noiseSuppression:true,
 autoGainControl:true
 }
-
 });
 
-document.getElementById("video").srcObject = stream;
+const video = document.getElementById("video");
+video.srcObject = stream;
 
-/* MIC STREAM */
+/* AUDIO */
 
-const ctx =
-new AudioContext({sampleRate:16000});
+const ctx = new AudioContext({sampleRate:16000});
 
-const input =
-ctx.createMediaStreamSource(stream);
+const input = ctx.createMediaStreamSource(stream);
 
-const processor =
-ctx.createScriptProcessor(4096,1,1);
+const processor = ctx.createScriptProcessor(16384,1,1);
 
 processor.onaudioprocess=(e)=>{
+
 if(isAgentSpeaking) return;
 
-const data =
-e.inputBuffer.getChannelData(0);
+const data = e.inputBuffer.getChannelData(0);
 
 if(ws && ws.readyState===1){
 
@@ -628,14 +631,35 @@ data:Array.from(data)
 
 };
 
-/* mute self echo */
-
 const gain = ctx.createGain();
 gain.gain.value = 0;
 
 input.connect(processor);
 processor.connect(gain);
 gain.connect(ctx.destination);
+
+/* FACE STREAMING */
+
+const canvas = document.createElement("canvas");
+const cctx = canvas.getContext("2d");
+
+faceInterval = setInterval(()=>{
+
+if(!ws || ws.readyState!==1) return;
+
+canvas.width = 320;
+canvas.height = 240;
+
+cctx.drawImage(video,0,0,320,240);
+
+const frame = canvas.toDataURL("image/jpeg",0.6);
+
+ws.send(JSON.stringify({
+type:"video_frame",
+data:frame
+}));
+
+},1800);
 
 }
 
@@ -765,15 +789,26 @@ box.value="";
 window.startConversation =
 async function(){
 
+if(started) return;
+
+started = true;
+
 connectWS();
+
+setTimeout(async ()=>{
 await startMedia();
+},500);
 
 setStatus("Streaming started");
 
 }
 
-window.stopConversation =
-function(){
+window.stopConversation = function(){
+
+started=false;
+mediaStarted=false;
+
+if(faceInterval) clearInterval(faceInterval);
 
 if(ws) ws.close();
 

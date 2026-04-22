@@ -177,143 +177,292 @@ from app.multimodal.facial_emotion_service import FacialEmotionService
 from app.multimodal.tts_service import TTSService
 
 import asyncio
-import tempfile
-import os
+import numpy as np
 import time
 
 
 class StreamingPipeline:
 
     def __init__(self):
+
+        # Core modules
         self.controller = CognitiveController()
         self.fusion = MultimodalFusion()
         self.stt = STTService()
+        self.face_service = FacialEmotionService()
         self.tts_service = TTSService()
 
-        # VAD + Streaming state
-        import numpy as np
+        # -------------------------
+        # AUDIO STREAMING STATE
+        # -------------------------
         self.audio_buffer = np.array([], dtype=np.float32)
-        self.silence_counter = 0
+
         self.speech_detected = False
+        self.silence_counter = 0
 
-        #Facial emotion 
-        self.face_service = FacialEmotionService()
-        self.current_face_emotion = "neutral" 
+        self.last_chunk_time = time.time()
 
-     #    self.audio_buffer = b''
-    #   self.last_audio_time = time.time()
+        # Voice Activity Detection
+        self.SILENCE_THRESHOLD = 0.008
+        self.SILENCE_CHUNKS_TO_END = 4
 
+        # Memory safety
+        self.MAX_AUDIO_SECONDS = 8
+        self.MAX_SAMPLES = 16000 * self.MAX_AUDIO_SECONDS
+
+        # Prevent overlapping STT
+        self.processing_audio = False
+
+        # -------------------------
+        # VIDEO / FACE STATE
+        # -------------------------
+        self.current_face_emotion = "neutral"
+        self.last_face_time = 0
+
+        # -------------------------
+        # PERFORMANCE
+        # -------------------------
+        self.loop = asyncio.get_event_loop()
+
+    # =====================================================
+    # MAIN ROUTER
+    # =====================================================
 
     async def process_stream(self, data: dict):
 
-        # -------------------------
-        # TEXT INPUT (already supported)
-        # -------------------------
-        if data.get("type") == "text":
-            fused_input = self.fusion.fuse(data)
-            return await self._run_cognitive(fused_input)
+        msg_type = data.get("type", "")
 
         # -------------------------
-        # VIDEO STREAMING INPUT
-        # -------------------------    
-
-        elif data.get("type") == "video_frame":
-
-            emotion = self.face_service.detect_emotion(data["data"])
-            self.current_face_emotion = emotion
-
-            return {"status": "face_updated"}    
+        # TEXT INPUT
+        # -------------------------
+        if msg_type == "text":
+            return await self.handle_text(data)
 
         # -------------------------
-        # AUDIO STREAMING INPUT
+        # VIDEO FRAME
         # -------------------------
-        elif data.get("type") == "audio_chunk":
+        elif msg_type == "video_frame":
+            return await self.handle_video(data)
 
-            import numpy as np
+        # -------------------------
+        # AUDIO STREAM
+        # -------------------------
+        elif msg_type == "audio_chunk":
+            return await self.handle_audio(data)
 
-            chunk = np.array(data["data"], dtype=np.float32)
+        return {"status": "unknown"}
 
-            # Initialize state variables
-            if not hasattr(self, "audio_buffer"):
-                self.audio_buffer = np.array([], dtype=np.float32)
-                self.silence_counter = 0
-                self.speech_detected = False
-                self.tts_service = TTSService()
-                
+    # =====================================================
+    # TEXT
+    # =====================================================
 
-            # Simple energy-based VAD(Voice Activity Detection)
+    async def handle_text(self, data):
+
+        perception_input = {
+            "type": "text",
+            "text": data.get("text", ""),
+            "face_emotion": self.current_face_emotion,
+            "voice_emotion": None
+        }
+
+        fused = self.fusion.fuse(perception_input)
+
+        return await self.run_cognitive(fused)
+
+    # =====================================================
+    # VIDEO / FACE
+    # =====================================================
+
+    async def handle_video(self, data):
+
+        try:
+            # throttle face processing
+            now = time.time()
+
+            if now - self.last_face_time < 1.0:
+                return {"status": "face_wait"}
+
+            self.last_face_time = now
+
+            frame = data.get("data", None)
+
+            if frame:
+                emotion = self.face_service.detect_emotion(frame)
+
+                if emotion:
+                    self.current_face_emotion = emotion
+
+            return {
+                "status": "face_updated",
+                "face_emotion": self.current_face_emotion
+            }
+
+        except Exception as e:
+            print("Face error:", e)
+            return {"status": "face_error"}
+
+    # =====================================================
+    # AUDIO
+    # =====================================================
+
+    async def handle_audio(self, data):
+
+        try:
+            chunk = np.array(
+                data.get("data", []),
+                dtype=np.float32
+            )
+
+            if len(chunk) == 0:
+                return {"status": "empty"}
+
             energy = np.mean(np.abs(chunk))
 
-            #SILENCE_THRESHOLD = 0.01
-            SILENCE_THRESHOLD = 0.008    #Better speech detection
-            SILENCE_CHUNKS_TO_END = 4  #Half the wait time before processing, reduces latency by ~0.5 sec while still capturing end of speech
-            #SILENCE_CHUNKS_TO_END = 8  # ~8 chunks ≈ ~1 sec silence
+            # -------------------------
+            # SPEECH DETECTED
+            # -------------------------
+            if energy > self.SILENCE_THRESHOLD:
 
-            if energy > SILENCE_THRESHOLD:
                 self.speech_detected = True
                 self.silence_counter = 0
-                self.audio_buffer = np.concatenate((self.audio_buffer, chunk))
+
+                self.audio_buffer = np.concatenate(
+                    (self.audio_buffer, chunk)
+                )
+
+                # memory safe buffer
+                if len(self.audio_buffer) > self.MAX_SAMPLES:
+                    self.audio_buffer = self.audio_buffer[
+                        -self.MAX_SAMPLES:
+                    ]
+
                 return {"status": "listening"}
 
+            # -------------------------
+            # SILENCE AFTER SPEECH
+            # -------------------------
             else:
+
                 if self.speech_detected:
+
                     self.silence_counter += 1
 
-                    if self.silence_counter >= SILENCE_CHUNKS_TO_END:
+                    if self.silence_counter >= self.SILENCE_CHUNKS_TO_END:
 
-                        # End of speech detected
-                        transcription = self.stt.transcribe_array(self.audio_buffer)
+                        if self.processing_audio:
+                            return {"status": "busy"}
 
-                        # Reset state
-                        self.audio_buffer = np.array([], dtype=np.float32)
-                        self.silence_counter = 0
-                        self.speech_detected = False
+                        self.processing_audio = True
 
-                        if not transcription.strip():
-                            return {"status": "silence"}
+                        result = await self.process_completed_speech()
 
-                        perception_input = {
-                            "type": "text",
-                            "text": transcription,
-                            #"face_emotion": data.get("face_emotion", "neutral"),
-                            "face_emotion": self.current_face_emotion,
-                            "voice_emotion": None
-                        }
+                        self.processing_audio = False
 
-                        fused_input = self.fusion.fuse(perception_input)
+                        return result
 
-                        return await self._run_cognitive(fused_input)
+            return {"status": "silence"}
 
-                return {"status": "silence"}
+        except Exception as e:
+            print("Audio error:", e)
+            self.reset_audio_state()
+            return {"status": "audio_error"}
 
-        
+    # =====================================================
+    # FINISHED SPEECH -> STT -> COGNITION
+    # =====================================================
 
-    async def _run_cognitive(self, fused_input):
-        loop = asyncio.get_event_loop()
-        result = await loop.run_in_executor(
-            None,
-            self.controller.process_input,
-            fused_input
-        )
+    async def process_completed_speech(self):
 
-        # Generate speech audio
-        audio_file = self.tts_service.synthesize(
-            text=result["text"],
-            speaking_speed=result.get("speaking_speed",1.0),
-            tone = result.get("tone","neutral")
-        )
+        try:
 
-        result["audio_file"] = audio_file
+            if len(self.audio_buffer) < 2000:
+                self.reset_audio_state()
+                return {"status": "too_short"}
 
-        print("FINAL RESPONSE SENT TO FRONTEND:")
-        print(result)
+            audio_copy = self.audio_buffer.copy()
 
-        return result
-        '''
-        result = await loop.run_in_executor(
-            None,
-            self.controller.process_input,
-            fused_input
-        )
-        return result
-        '''
+            self.reset_audio_state()
+
+            # Run Whisper off main thread
+            transcription = await self.loop.run_in_executor(
+                None,
+                self.stt.transcribe_array,
+                audio_copy
+            )
+
+            if not transcription.strip():
+                return {"status": "no_text"}
+
+            perception_input = {
+                "type": "text",
+                "text": transcription,
+                "face_emotion": self.current_face_emotion,
+                "voice_emotion": None
+            }
+
+            fused = self.fusion.fuse(perception_input)
+
+            return await self.run_cognitive(fused)
+
+        except Exception as e:
+
+            print("STT error:", e)
+
+            self.reset_audio_state()
+
+            return {"status": "stt_error"}
+
+    # =====================================================
+    # COGNITION + TTS
+    # =====================================================
+
+    async def run_cognitive(self, fused_input):
+
+        try:
+
+            result = await self.loop.run_in_executor(
+                None,
+                self.controller.process_input,
+                fused_input
+            )
+
+            # -------------------------
+            # TTS
+            # -------------------------
+            audio_file = await self.loop.run_in_executor(
+                None,
+                self.tts_service.synthesize,
+                result["text"],
+                result.get("speaking_speed", 1.0),
+                result.get("tone", "neutral")
+            )
+
+            result["audio_file"] = audio_file
+
+            print("FINAL RESPONSE:")
+            print(result["text"])
+
+            return result
+
+        except Exception as e:
+
+            print("Cognitive error:", e)
+
+            return {
+                "text": "I apologize, something went wrong.",
+                "agent_emotion": "neutral",
+                "tone": "calm",
+                "gesture": "idle",
+                "speaking_speed": 1.0,
+                "audio_file": ""
+            }
+
+    # =====================================================
+    # RESET AUDIO STATE
+    # =====================================================
+
+    def reset_audio_state(self):
+
+        self.audio_buffer = np.array([], dtype=np.float32)
+        self.speech_detected = False
+        self.silence_counter = 0

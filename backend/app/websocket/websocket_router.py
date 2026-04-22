@@ -24,7 +24,10 @@ async def multimodal_websocket(websocket: WebSocket):
            response = await pipeline.process_stream(data)
 
            if response:
-                await websocket.send_json(response)
+                try:
+                    await websocket.send_json(response)
+                except:
+                    break
            
            elif data["type"] == "video_frame":
                 result = await pipeline.process_stream(data)
