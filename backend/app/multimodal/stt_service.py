@@ -118,8 +118,10 @@ class STTService:
 
         segments, info = self.model.transcribe(
             audio_array,
-            beam_size=5,
-            vad_filter=True
+            beam_size=1,      #fastest real-time
+            language="en",   #no random language
+            vad_filter=True,
+            condition_on_previous_text=False   #stops weird carryover hallucinations
         )
 
         text = ""

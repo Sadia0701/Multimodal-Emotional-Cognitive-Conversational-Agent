@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Embodied Cognitive Agent v2</title>
+
+<link rel="icon" href="data:,">
+
+<style>
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+}
+
+body{
+background:linear-gradient(135deg,#0a0a0a,#111827,#0f172a);
+color:#fff;
+font-family:Segoe UI,Arial,sans-serif;
+overflow:hidden;
+height:100vh;
+}
+
+#main{
+display:grid;
+grid-template-columns: 2fr 1fr;
+height:100vh;
+gap:12px;
+padding:12px;
+}
+
+.panel{
+background:rgba(255,255,255,0.05);
+border:1px solid rgba(255,255,255,0.08);
+backdrop-filter: blur(12px);
+border-radius:18px;
+box-shadow:0 0 25px rgba(0,0,0,.35);
+overflow:hidden;
+}
+
+#leftPanel{
+display:flex;
+flex-direction:column;
+padding:10px;
+}
+
+#avatarCanvas{
+flex:1;
+border-radius:16px;
+overflow:hidden;
+background:radial-gradient(circle at center,#1e293b,#020617);
+}
+
+#rightPanel{
+display:flex;
+flex-direction:column;
+padding:12px;
+gap:12px;
+}
+
+#video{
+width:100%;
+border-radius:14px;
+border:1px solid rgba(255,255,255,.12);
+background:#000;
+}
+
+#status{
+padding:10px;
+border-radius:12px;
+background:rgba(0,255,180,.08);
+font-size:14px;
+}
+
+#output{
+flex:1;
+padding:12px;
+border-radius:14px;
+background:rgba(255,255,255,.04);
+overflow:auto;
+white-space:pre-wrap;
+font-size:15px;
+line-height:1.45;
+}
+
+#controls{
+display:flex;
+gap:8px;
+flex-wrap:wrap;
+}
+
+#textInput{
+flex:1;
+padding:12px;
+border:none;
+border-radius:12px;
+outline:none;
+background:#0f172a;
+color:#fff;
+}
+
+button{
+padding:12px 16px;
+border:none;
+border-radius:12px;
+cursor:pointer;
+font-weight:600;
+background:linear-gradient(135deg,#2563eb,#06b6d4);
+color:white;
+}
+
+button:hover{
+opacity:.9;
+}
+
+.small{
+font-size:13px;
+opacity:.8;
+}
+</style>
+
+<script type="importmap">
+{
+"imports":{
+"three":"https://unpkg.com/three@0.158.0/build/three.module.js",
+"three/addons/":"https://unpkg.com/three@0.158.0/examples/jsm/"
+}
+}
+</script>
+</head>
+
+<body>
+
+<div id="main">
+
+<div id="leftPanel" class="panel">
+<div class="small" style="padding:6px 4px 10px 4px;">
+Embodied Cognitive Conversational Agent
+</div>
+<div id="avatarCanvas"></div>
+</div>
+
+<div id="rightPanel" class="panel">
+
+<video id="video" autoplay muted playsinline></video>
+
+<div id="status">Disconnected</div>
+
+<div id="controls">
+<input id="textInput" placeholder="Type message...">
+<button onclick="sendText()">Send</button>
+</div>
+
+<div id="controls">
+<button onclick="startConversation()">Start</button>
+<button onclick="stopConversation()">Stop</button>
+</div>
+
+<div id="output">Agent ready.</div>
+
+</div>
+
+</div>
+
+<script type="module">
+
+import * as THREE from "three";
+import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+
+/* ---------------------------------------------------
+GLOBAL
+--------------------------------------------------- */
+
+let scene,camera,renderer,avatar,clock;
+let ws=null;
+let speaking=false;
+let listening=false;
+let thinking=false;
+
+let jawParts=[];
+let headBone=null;
+let spineBone=null;
+let leftArm=null;
+let rightArm=null;
+
+let idleTime=0;
+
+/* ---------------------------------------------------
+AVATAR INIT
+--------------------------------------------------- */
+
+function initAvatar(){
+
+clock = new THREE.Clock();
+
+scene = new THREE.Scene();
+
+camera = new THREE.PerspectiveCamera(
+45,
+window.innerWidth/window.innerHeight,
+0.1,
+1000
+);
+
+camera.position.set(0,1.45,2.2);
+
+renderer = new THREE.WebGLRenderer({
+antialias:true,
+alpha:true
+});
+
+renderer.setPixelRatio(window.devicePixelRatio);
+renderer.setSize(
+document.getElementById("avatarCanvas").clientWidth,
+document.getElementById("avatarCanvas").clientHeight
+);
+
+document.getElementById("avatarCanvas")
+.appendChild(renderer.domElement);
+
+/* lighting */
+
+const hemi = new THREE.HemisphereLight(
+0xffffff,
+0x223344,
+2.0
+);
+scene.add(hemi);
+
+const key = new THREE.DirectionalLight(
+0xffffff,
+2.0
+);
+key.position.set(1,2,2);
+scene.add(key);
+
+const rim = new THREE.DirectionalLight(
+0x66ccff,
+1.2
+);
+rim.position.set(-2,1,0);
+scene.add(rim);
+
+/* load avatar */
+
+const loader = new GLTFLoader();
+
+loader.load(
+"./girl_avatar.glb",
+
+(gltf)=>{
+
+avatar = gltf.scene;
+window.avatar = avatar;
+console.log("Avatar exposed globally");
+avatar.scale.set(1.2,1.2,1.2);
+avatar.position.set(0,-1.1,0);
+
+scene.add(avatar);
+
+scanAvatar();
+
+console.log("Avatar loaded");
+
+},
+
+undefined,
+
+(err)=>{
+console.error("Avatar load failed",err);
+}
+
+);
+
+animate();
+
+}
+
+function scanAvatar(){
+
+avatar.traverse((obj)=>{
+
+const n = obj.name.toLowerCase();
+
+/* bones */
+
+if(obj.isBone){
+
+if(n.includes("head")) headBone=obj;
+if(n.includes("spine")) spineBone=obj;
+if(n.includes("leftarm") || n.includes("leftshoulder")) leftArm=obj;
+if(n.includes("rightarm") || n.includes("rightshoulder")) rightArm=obj;
+}
+
+/* jaw / mouth / face mesh */
+
+if(obj.isMesh){
+
+if(
+n.includes("head") ||
+n.includes("face") ||
+n.includes("teeth") ||
+n.includes("mouth")
+){
+jawParts.push(obj);
+}
+
+}
+
+});
+
+}
+
+/* ---------------------------------------------------
+ANIMATION LOOP
+--------------------------------------------------- */
+
+function animate(){
+
+requestAnimationFrame(animate);
+
+const dt = clock.getDelta();
+idleTime += dt;
+
+/* idle breathing */
+
+if(avatar && spineBone){
+spineBone.rotation.x =
+Math.sin(idleTime*1.5)*0.015;
+}
+
+/* subtle body sway */
+
+if(avatar){
+avatar.rotation.y =
+Math.sin(idleTime*0.6)*0.03;
+}
+
+/* blinking simulation */
+
+if(headBone){
+headBone.rotation.z =
+Math.sin(idleTime*0.25)*0.01;
+}
+
+/* listening mode */
+
+if(listening && headBone){
+headBone.rotation.x = -0.08;
+}
+
+/* thinking mode */
+
+if(thinking && headBone){
+headBone.rotation.y =
+Math.sin(idleTime*2)*0.08;
+}
+
+/* speaking lip sync */
+
+if(speaking){
+applyLipSync();
+}
+
+renderer.render(scene,camera);
+
+}
+
+/* ---------------------------------------------------
+LIP SYNC
+--------------------------------------------------- */
+
+function applyLipSync(){
+
+jawParts.forEach(mesh=>{
+
+if(mesh.morphTargetInfluences &&
+mesh.morphTargetInfluences.length>0){
+
+mesh.morphTargetInfluences[0] =
+0.15 + Math.random()*0.45;
+
+}
+
+});
+
+}
+
+/* ---------------------------------------------------
+EMOTION ENGINE
+--------------------------------------------------- */
+
+function applyEmotion(emotion){
+
+if(!headBone) return;
+
+switch(emotion){
+
+case "happy":
+headBone.rotation.x = -0.04;
+if(rightArm) rightArm.rotation.z=-0.3;
+break;
+
+case "sad":
+headBone.rotation.x = 0.12;
+if(spineBone) spineBone.rotation.x=0.08;
+break;
+
+case "angry":
+headBone.rotation.y = 0.08;
+if(leftArm) leftArm.rotation.z=0.2;
+if(rightArm) rightArm.rotation.z=-0.2;
+break;
+
+case "fear":
+headBone.rotation.x = 0.05;
+camera.position.z = 2.35;
+break;
+
+case "surprise":
+headBone.rotation.x = -0.12;
+break;
+
+default:
+resetPose();
+
+}
+
+}
+
+/* ---------------------------------------------------
+GESTURE ENGINE
+--------------------------------------------------- */
+
+function performGesture(g){
+
+if(!avatar) return;
+
+switch(g){
+
+case "slight_nod":
+
+nod();
+break;
+
+case "slow_head_tilt":
+
+tilt();
+break;
+
+case "lean_forward":
+
+leanForward();
+break;
+
+case "firm_posture":
+
+firmPosture();
+break;
+
+default:
+break;
+
+}
+
+}
+
+function nod(){
+
+if(!headBone) return;
+
+headBone.rotation.x = 0.18;
+
+setTimeout(()=>{
+headBone.rotation.x = 0;
+},350);
+
+}
+
+function tilt(){
+
+if(!headBone) return;
+
+headBone.rotation.z = 0.18;
+
+setTimeout(()=>{
+headBone.rotation.z = 0;
+},700);
+
+}
+
+function leanForward(){
+
+camera.position.z = 1.85;
+
+setTimeout(()=>{
+camera.position.z = 2.2;
+},800);
+
+}
+
+function firmPosture(){
+
+if(spineBone){
+spineBone.rotation.x = -0.05;
+
+setTimeout(()=>{
+spineBone.rotation.x = 0;
+},700);
+}
+
+}
+
+function resetPose(){
+
+camera.position.z = 2.2;
+
+if(headBone){
+headBone.rotation.set(0,0,0);
+}
+
+if(spineBone){
+spineBone.rotation.set(0,0,0);
+}
+
+}
+
+/* ---------------------------------------------------
+MEDIA
+--------------------------------------------------- */
+
+async function startMedia(){
+
+const stream =
+await navigator.mediaDevices.getUserMedia({
+video:true,
+audio:{
+echoCancellation:true,
+noiseSuppression:true,
+autoGainControl:true
+}
+});
+
+document.getElementById("video").srcObject = stream;
+
+/* mic stream */
+
+const audioContext =
+new AudioContext({sampleRate:16000});
+
+const input =
+audioContext.createMediaStreamSource(stream);
+
+const processor =
+audioContext.createScriptProcessor(4096,1,1);
+
+processor.onaudioprocess=(event)=>{
+
+const data =
+event.inputBuffer.getChannelData(0);
+
+if(ws && ws.readyState===1){
+
+ws.send(JSON.stringify({
+type:"audio_chunk",
+data:Array.from(data)
+}));
+
+}
+
+};
+
+/* mute local echo */
+
+const gain = audioContext.createGain();
+gain.gain.value = 0;
+
+input.connect(processor);
+processor.connect(gain);
+gain.connect(audioContext.destination);
+
+}
+
+/* ---------------------------------------------------
+WEBSOCKET
+--------------------------------------------------- */
+
+function connectWS(){
+
+ws = new WebSocket("ws://127.0.0.1:8000/ws/multimodal");
+
+ws.onopen=()=>{
+setStatus("Connected to backend");
+};
+
+ws.onclose=()=>{
+setStatus("Disconnected");
+};
+
+ws.onerror=()=>{
+setStatus("Connection error");
+};
+
+ws.onmessage=(event)=>{
+
+const data = JSON.parse(event.data);
+
+if(data.status){
+
+if(data.status==="listening"){
+listening=true;
+thinking=false;
+}
+
+return;
+}
+
+listening=false;
+thinking=true;
+
+/* text */
+
+if(data.text){
+document.getElementById("output").innerText =
+data.text;
+}
+
+/* cognition driven avatar */
+
+if(data.agent_emotion)
+applyEmotion(data.agent_emotion);
+
+if(data.gesture)
+performGesture(data.gesture);
+
+/* play voice */
+
+if(data.audio_file){
+
+const audio = new Audio(
+"data:audio/wav;base64,"+data.audio_file
+);
+
+audio.onplay=()=>{
+speaking=true;
+thinking=false;
+};
+
+audio.onended=()=>{
+speaking=false;
+resetPose();
+};
+
+audio.play();
+
+}
+
+};
+
+}
+
+function setStatus(msg){
+document.getElementById("status").innerText = msg;
+}
+
+/* ---------------------------------------------------
+TEXT
+--------------------------------------------------- */
+
+window.sendText = function(){
+
+const input =
+document.getElementById("textInput");
+
+const txt = input.value.trim();
+
+if(!txt) return;
+
+if(!ws || ws.readyState!==1){
+alert("Backend not connected");
+return;
+}
+
+thinking=true;
+
+ws.send(JSON.stringify({
+type:"text",
+text:txt,
+face_emotion:"neutral"
+}));
+
+input.value="";
+
+}
+
+/* ---------------------------------------------------
+START STOP
+--------------------------------------------------- */
+
+window.startConversation = async function(){
+
+connectWS();
+await startMedia();
+setStatus("Streaming started");
+
+}
+
+window.stopConversation = function(){
+
+if(ws) ws.close();
+setStatus("Stopped");
+
+}
+
+/* --------------------------------------------------- */
+
+window.addEventListener("resize",()=>{
+
+if(!renderer) return;
+
+const el =
+document.getElementById("avatarCanvas");
+
+renderer.setSize(
+el.clientWidth,
+el.clientHeight
+);
+
+camera.aspect =
+el.clientWidth/el.clientHeight;
+
+camera.updateProjectionMatrix();
+
+});
+
+initAvatar();
+
+</script>
+
+</body>
+</html>

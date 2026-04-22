@@ -2,6 +2,7 @@ from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from app.websocket.connection_manager import ConnectionManager
 from app.multimodal.streaming_pipeline import StreamingPipeline
 import json
+import traceback
 
 router = APIRouter()
 #manager = ConnectionManager()
@@ -33,10 +34,20 @@ async def multimodal_websocket(websocket: WebSocket):
 
     except WebSocketDisconnect:
         print("WebSocket disconnected")
-
+    
     except Exception as e:
-        print("WebSocket error:", e)
-        await websocket.close()
+        print("========== BACKEND ERROR ==========")
+        traceback.print_exc()
+        print("==================================")
+
+        try:
+            await websocket.close()
+        except:
+            pass
+    
+    #except Exception as e:
+     #   print("WebSocket error:", e)
+      #  await websocket.close()
 
     '''    message = await websocket.receive()
             

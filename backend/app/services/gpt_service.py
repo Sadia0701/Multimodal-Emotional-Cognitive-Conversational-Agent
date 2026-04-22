@@ -20,7 +20,10 @@ Arousal: {emotional_state['arousal']}
 Dominance: {emotional_state['dominance']}
 
 You must generate a response strictly aligned with the selected action.
-Do not override the action.
+Do not override the action. 
+Always respond in English only.
+Never use any other language.
+Respond according to user input.
 """
 
         response = self.client.chat.completions.create(

@@ -244,8 +244,10 @@ class StreamingPipeline:
             # Simple energy-based VAD(Voice Activity Detection)
             energy = np.mean(np.abs(chunk))
 
-            SILENCE_THRESHOLD = 0.01
-            SILENCE_CHUNKS_TO_END = 8  # ~8 chunks ≈ ~1 sec silence
+            #SILENCE_THRESHOLD = 0.01
+            SILENCE_THRESHOLD = 0.008    #Better speech detection
+            SILENCE_CHUNKS_TO_END = 4  #Half the wait time before processing, reduces latency by ~0.5 sec while still capturing end of speech
+            #SILENCE_CHUNKS_TO_END = 8  # ~8 chunks ≈ ~1 sec silence
 
             if energy > SILENCE_THRESHOLD:
                 self.speech_detected = True
