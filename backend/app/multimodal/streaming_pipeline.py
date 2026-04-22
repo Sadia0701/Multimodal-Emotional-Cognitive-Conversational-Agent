@@ -30,8 +30,15 @@ class StreamingPipeline:
             # If buffer > 2 seconds (approx 32000 bytes at 16kHz mono)
             if len(self.audio_buffer) > 32000:
 
-                transcription = self.stt.transcribe_audio(self.audio_buffer)
+                try:
+                  transcription = self.stt.transcribe_audio(self.audio_buffer)
+                except Exception as e:
+                  print("STT ERROR:", e)
+                  self.audio_buffer = b''
+                  return {"status": "audio_error"}
+
                 self.audio_buffer = b''
+
 
                 fused_input = self.fusion.fuse({
                     "text": transcription,

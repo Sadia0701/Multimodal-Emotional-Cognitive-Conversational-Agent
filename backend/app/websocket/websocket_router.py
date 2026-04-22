@@ -2,7 +2,11 @@ from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from app.websocket.connection_manager import ConnectionManager
 from app.multimodal.streaming_pipeline import StreamingPipeline
 import json
+
 import traceback
+
+
+
 
 router = APIRouter()
 #manager = ConnectionManager()
@@ -15,6 +19,7 @@ async def multimodal_websocket(websocket: WebSocket):
     pipeline = StreamingPipeline()
 
     try:
+        
         while True:
 
            message = await websocket.receive_text()

@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Real-Time STT Test</title>
+</head>
+<body>
+
+<h2>Real-Time Speech Test</h2>
+<button onclick="startRecording()">Start Speaking</button>
+
+<pre id="output"></pre>
+
+<script>
+    const ws = new WebSocket("ws://127.0.0.1:8000/ws/multimodal");
+    const output = document.getElementById("output");
+
+    ws.onopen = () => {
+        output.innerHTML += "Connected to server\n";
+    };
+
+    ws.onmessage = (event) => {
+        output.innerHTML += "\nSERVER:\n" + event.data + "\n";
+    };
+
+    ws.onerror = (error) => {
+        output.innerHTML += "\nWebSocket Error\n";
+        console.error(error);
+    };
+
+    ws.onclose = () => {
+        output.innerHTML += "\nConnection Closed\n";
+    };
+
+    async function startRecording() {
+
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+
+        const mediaRecorder = new MediaRecorder(stream, {
+            mimeType: "audio/webm"
+        });
+
+        mediaRecorder.ondataavailable = async (event) => {
+            if (event.data.size > 0) {
+                const arrayBuffer = await event.data.arrayBuffer();
+
+                // Send RAW binary audio
+                ws.send(arrayBuffer);
+            }
+        };
+
+        mediaRecorder.start(2000); // send chunk every 2 seconds
+
+        output.innerHTML += "Recording started...\n";
+    }
+</script>
+
+</body>
+</html>
