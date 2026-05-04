@@ -210,8 +210,8 @@ class StreamingPipeline:
         self.last_chunk_time = time.time()
 
         # Voice Activity Detection
-        self.SILENCE_THRESHOLD = 0.008
-        self.SILENCE_CHUNKS_TO_END = 4
+        self.SILENCE_THRESHOLD = 0.003
+        self.SILENCE_CHUNKS_TO_END = 2
 
         # Memory safety
         self.MAX_AUDIO_SECONDS = 8

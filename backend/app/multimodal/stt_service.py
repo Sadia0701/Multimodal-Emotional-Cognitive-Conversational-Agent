@@ -96,6 +96,7 @@ class STTService:
 #Version 3
 # app/multimodal/stt_service.py
 
+
 from faster_whisper import WhisperModel
 import numpy as np
 import torch
@@ -109,10 +110,10 @@ class STTService:
         device = "cuda" if torch.cuda.is_available() else "cpu"
         
         self.model = WhisperModel(
-            "base", #lighter model for cpu
-            device="cpu",
-            compute_type="int8"
-        ) 
+            "medium",
+            device=device,
+            compute_type="float16" if device == "cuda" else "int8"
+)
         
 
         print("Whisper ready.")
