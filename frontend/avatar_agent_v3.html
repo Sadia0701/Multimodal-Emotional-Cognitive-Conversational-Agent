@@ -196,7 +196,8 @@ if(e==="sad" && headBone) headBone.rotation.x=0.1;
 }
 
 /* NATURAL HANDS */
-function talkGesture(){
+//Disable for now, fix later
+/*function talkGesture(){
 if(leftArm){
 leftArm.rotation.x=0.05+Math.sin(t*2)*0.05;
 leftArm.rotation.z=0.05;
@@ -205,7 +206,7 @@ if(rightArm){
 rightArm.rotation.x=0.05+Math.sin(t*2)*0.05;
 rightArm.rotation.z=-0.05;
 }
-}
+}*/
 
 /* RESET */
 function resetPose(){
@@ -239,7 +240,7 @@ input.connect(proc);proc.connect(gain);gain.connect(ctx.destination);
 const canvas=document.createElement("canvas");
 const ctx2=canvas.getContext("2d");
 
-faceInterval=setInterval(()=>{
+/*faceInterval=setInterval(()=>{
 if(!ws || ws.readyState!==1) return;
 
 canvas.width=224;canvas.height=224;
@@ -251,6 +252,46 @@ data:canvas.toDataURL("image/jpeg",0.6)
 }));
 
 },300);
+}*/
+
+let faceInterval;
+
+function startCamera(){
+
+    const video = document.getElementById("video");
+
+    navigator.mediaDevices.getUserMedia({ video: true })
+    .then(stream=>{
+        video.srcObject = stream;
+    });
+
+    faceInterval = setInterval(sendFrame, 800); // IMPORTANT
+}
+
+function stopCamera(){
+    clearInterval(faceInterval);
+}
+
+function sendFrame(){
+
+    const video = document.getElementById("video");
+
+    if(!video || !ws || ws.readyState !== 1) return;
+
+    const canvas = document.createElement("canvas");
+
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+
+    const ctx = canvas.getContext("2d");
+    ctx.drawImage(video, 0, 0);
+
+    const imageData = canvas.toDataURL("image/jpeg", 0.6);
+
+    ws.send(JSON.stringify({
+        type: "video_frame",
+        data: imageData
+    }));
 }
 
 /* WS */
@@ -301,12 +342,14 @@ document.getElementById("textInput").value="";
 window.startConversation=async function(){
 connectWS();
 await startMedia();
+startCamera();   // ADD THIS
 setStatus("Streaming started");
 }
 
 /* STOP */
 window.stopConversation=function(){
 if(faceInterval) clearInterval(faceInterval);
+stopCamera();   // ADD THIS
 if(ws) ws.close();
 setStatus("Stopped");
 }
