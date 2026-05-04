@@ -1,129 +1,130 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Embodied Cognitive Agent v3</title>
-<link rel="icon" href="data:,">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <title>Embodied Cognitive Agent v3</title>
+    <link rel="icon" href="data:,">
 
-<style>
-*{
-margin:0;
-padding:0;
-box-sizing:border-box;
-}
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-body{
-height:100vh;
-overflow:hidden;
-font-family:Segoe UI,Arial,sans-serif;
-background:
-radial-gradient(circle at top right,#1e3a8a,#020617 60%),
-linear-gradient(135deg,#020617,#111827);
-color:white;
-}
+        body {
+            height: 100vh;
+            overflow: hidden;
+            font-family: Segoe UI, Arial, sans-serif;
+            background:
+                radial-gradient(circle at top right, #1e3a8a, #020617 60%),
+                linear-gradient(135deg, #020617, #111827);
+            color: white;
+        }
 
-#main{
-display:grid;
-grid-template-columns:2fr 1fr;
-gap:12px;
-padding:12px;
-height:100vh;
-}
+        #main {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 12px;
+            padding: 12px;
+            height: 100vh;
+        }
 
-.panel{
-background:rgba(255,255,255,.05);
-border:1px solid rgba(255,255,255,.08);
-border-radius:20px;
-backdrop-filter:blur(14px);
-box-shadow:0 0 25px rgba(0,0,0,.35);
-overflow:hidden;
-}
+        .panel {
+            background: rgba(255, 255, 255, .05);
+            border: 1px solid rgba(255, 255, 255, .08);
+            border-radius: 20px;
+            backdrop-filter: blur(14px);
+            box-shadow: 0 0 25px rgba(0, 0, 0, .35);
+            overflow: hidden;
+        }
 
-#left{
-display:flex;
-flex-direction:column;
-padding:10px;
-}
+        #left {
+            display: flex;
+            flex-direction: column;
+            padding: 10px;
+        }
 
-#title{
-padding:6px 6px 10px 6px;
-font-size:18px;
-font-weight:700;
-}
+        #title {
+            padding: 6px 6px 10px 6px;
+            font-size: 18px;
+            font-weight: 700;
+        }
 
-#avatarCanvas{
-flex:1;
-border-radius:18px;
-overflow:hidden;
-background:
-radial-gradient(circle at center,#1e293b,#020617);
-}
+        #avatarCanvas {
+            flex: 1;
+            border-radius: 18px;
+            overflow: hidden;
+            background:
+                radial-gradient(circle at center, #1e293b, #020617);
+        }
 
-#right{
-display:flex;
-flex-direction:column;
-gap:12px;
-padding:12px;
-}
+        #right {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            padding: 12px;
+        }
 
-#video{
-width:100%;
-height:220px;
-object-fit:cover;
-border-radius:16px;
-background:#000;
-border:1px solid rgba(255,255,255,.08);
-}
+        #video {
+            width: 100%;
+            height: 220px;
+            object-fit: cover;
+            border-radius: 16px;
+            background: #000;
+            border: 1px solid rgba(255, 255, 255, .08);
+        }
 
-#status{
-padding:10px;
-border-radius:14px;
-background:rgba(16,185,129,.10);
-font-size:14px;
-}
+        #status {
+            padding: 10px;
+            border-radius: 14px;
+            background: rgba(16, 185, 129, .10);
+            font-size: 14px;
+        }
 
-#output{
-flex:1;
-padding:12px;
-border-radius:16px;
-background:rgba(255,255,255,.04);
-white-space:pre-wrap;
-overflow:auto;
-line-height:1.45;
-}
+        #output {
+            flex: 1;
+            padding: 12px;
+            border-radius: 16px;
+            background: rgba(255, 255, 255, .04);
+            white-space: pre-wrap;
+            overflow: auto;
+            line-height: 1.45;
+        }
 
-.row{
-display:flex;
-gap:8px;
-}
+        .row {
+            display: flex;
+            gap: 8px;
+        }
 
-input{
-flex:1;
-padding:12px;
-border:none;
-outline:none;
-border-radius:14px;
-background:#0f172a;
-color:white;
-}
+        input {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            outline: none;
+            border-radius: 14px;
+            background: #0f172a;
+            color: white;
+        }
 
-button{
-padding:12px 16px;
-border:none;
-border-radius:14px;
-cursor:pointer;
-font-weight:700;
-background:linear-gradient(135deg,#2563eb,#06b6d4);
-color:white;
-}
+        button {
+            padding: 12px 16px;
+            border: none;
+            border-radius: 14px;
+            cursor: pointer;
+            font-weight: 700;
+            background: linear-gradient(135deg, #2563eb, #06b6d4);
+            color: white;
+        }
 
-button:hover{
-opacity:.92;
-}
-</style>
+        button:hover {
+            opacity: .92;
+        }
+    </style>
 
-<script type="importmap">
+    <script type="importmap">
 {
 "imports":{
 "three":"https://unpkg.com/three@0.158.0/build/three.module.js",
@@ -135,713 +136,714 @@ opacity:.92;
 
 <body>
 
-<div id="main">
+    <div id="main">
 
-<div id="left" class="panel">
-<div id="title">Embodied Cognitive Conversational Agent</div>
-<div id="avatarCanvas"></div>
-</div>
+        <div id="left" class="panel">
+            <div id="title">Embodied Cognitive Conversational Agent</div>
+            <div id="avatarCanvas"></div>
+        </div>
 
-<div id="right" class="panel">
+        <div id="right" class="panel">
 
-<video id="video" autoplay muted playsinline></video>
+            <video id="video" autoplay muted playsinline></video>
 
-<div id="status">Disconnected</div>
+            <div id="status">Disconnected</div>
 
-<div class="row">
-<input id="textInput" placeholder="Type your message...">
-<button onclick="sendText()">Send</button>
-</div>
+            <div class="row">
+                <input id="textInput" placeholder="Type your message...">
+                <button onclick="sendText()">Send</button>
+            </div>
 
-<div class="row">
-<button onclick="startConversation()">Start</button>
-<button onclick="stopConversation()">Stop</button>
-</div>
+            <div class="row">
+                <button onclick="startConversation()">Start</button>
+                <button onclick="stopConversation()">Stop</button>
+            </div>
 
-<div id="output">Agent ready.</div>
+            <div id="output">Agent ready.</div>
 
-</div>
+        </div>
 
-</div>
+    </div>
 
-<script type="module">
+    <script type="module">
 
-import * as THREE from "three";
-import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+        import * as THREE from "three";
+        import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 
-/* ------------------------------------ */
-/* GLOBALS */
-/* ------------------------------------ */
+        /* ------------------------------------ */
+        /* GLOBALS */
+        /* ------------------------------------ */
 
-let scene,camera,renderer,avatar,clock;
-let ws=null;
+        let scene, camera, renderer, avatar, clock;
+        let ws = null;
 
-let speaking=false;
-let listening=false;
-let thinking=false;
-let isAgentSpeaking=false;
+        let speaking = false;
+        let listening = false;
+        let thinking = false;
+        let isAgentSpeaking = false;
 
-let started=false;
-let mediaStarted=false;
+        let started = false;
+        let mediaStarted = false;
 
-let headBone=null;
-let spineBone=null;
-let leftArm=null;
-let rightArm=null;
+        let headBone = null;
+        let spineBone = null;
+        let leftArm = null;
+        let rightArm = null;
 
-let faceMeshes=[];
+        let faceMeshes = [];
 
-let t=0;
-let faceInterval=null;
+        let t = 0;
+        let faceInterval = null;
 
-/* ------------------------------------ */
-/* INIT */
-/* ------------------------------------ */
+        /* ------------------------------------ */
+        /* INIT */
+        /* ------------------------------------ */
 
-function initScene(){
+        function initScene() {
 
-clock = new THREE.Clock();
+            clock = new THREE.Clock();
 
-scene = new THREE.Scene();
+            scene = new THREE.Scene();
 
-camera = new THREE.PerspectiveCamera(
-35,
-2,
-0.1,
-1000
-);
+            camera = new THREE.PerspectiveCamera(
+                35,
+                2,
+                0.1,
+                1000
+            );
 
-/* Bust + visible hands framing */
-//Camera position to centre avatar
-camera.position.set(0,1.55,2.85);
-camera.lookAt(0,1.35,0);
+            /* Bust + visible hands framing */
+            //Camera position to centre avatar
+            camera.position.set(0, 1.55, 2.85);
+            camera.lookAt(0, 1.35, 0);
 
-renderer = new THREE.WebGLRenderer({
-alpha:true,
-antialias:true
-});
+            renderer = new THREE.WebGLRenderer({
+                alpha: true,
+                antialias: true
+            });
 
-renderer.setPixelRatio(window.devicePixelRatio);
+            renderer.setPixelRatio(window.devicePixelRatio);
 
-const canvasDiv =
-document.getElementById("avatarCanvas");
+            const canvasDiv =
+                document.getElementById("avatarCanvas");
 
-renderer.setSize(
-canvasDiv.clientWidth,
-canvasDiv.clientHeight
-);
+            renderer.setSize(
+                canvasDiv.clientWidth,
+                canvasDiv.clientHeight
+            );
 
-canvasDiv.appendChild(renderer.domElement);
+            canvasDiv.appendChild(renderer.domElement);
 
-/* LIGHTS */
+            /* LIGHTS */
 
-const hemi = new THREE.HemisphereLight(
-0xffffff,
-0x223344,
-2.2
-);
-scene.add(hemi);
+            const hemi = new THREE.HemisphereLight(
+                0xffffff,
+                0x223344,
+                2.2
+            );
+            scene.add(hemi);
 
-const key = new THREE.DirectionalLight(
-0xffffff,
-2.0
-);
-key.position.set(1,2,2);
-scene.add(key);
+            const key = new THREE.DirectionalLight(
+                0xffffff,
+                2.0
+            );
+            key.position.set(1, 2, 2);
+            scene.add(key);
 
-const rim = new THREE.DirectionalLight(
-0x60a5fa,
-1.1
-);
-rim.position.set(-2,1,0);
-scene.add(rim);
+            const rim = new THREE.DirectionalLight(
+                0x60a5fa,
+                1.1
+            );
+            rim.position.set(-2, 1, 0);
+            scene.add(rim);
 
-loadAvatar();
+            loadAvatar();
 
-animate();
+            animate();
 
-}
+        }
 
-/* ------------------------------------ */
-/* LOAD AVATAR */
-/* ------------------------------------ */
+        /* ------------------------------------ */
+        /* LOAD AVATAR */
+        /* ------------------------------------ */
 
-function loadAvatar(){
+        function loadAvatar() {
 
-const loader = new GLTFLoader();
+            const loader = new GLTFLoader();
 
-loader.load(
+            loader.load(
 
-"./girl_avatar.glb",
+                "./girl_avatar.glb",
 
-(gltf)=>{
+                (gltf) => {
 
-avatar = gltf.scene;
+                    avatar = gltf.scene;
 
-/* Bigger + centered */
-//Avatar Load Positioning - Adjust as needed based on your model's original scale and position
-avatar.scale.set(1.45,1.45,1.45);
-avatar.position.set(0,-0.78,0);
+                    /* Bigger + centered */
+                    //Avatar Load Positioning - Adjust as needed based on your model's original scale and position
+                    avatar.scale.set(1.45, 1.45, 1.45);
+                    avatar.position.set(0, -0.78, 0);
 
-scene.add(avatar);
+                    scene.add(avatar);
 
-window.avatar = avatar;
+                    window.avatar = avatar;
 
-scanRig();
+                    scanRig();
 
-console.log("Avatar loaded");
+                    console.log("Avatar loaded");
 
-},
+                },
 
-undefined,
+                undefined,
 
-(err)=>{
-console.error("Avatar failed",err);
-}
+                (err) => {
+                    console.error("Avatar failed", err);
+                }
 
-);
+            );
 
-}
+        }
 
-function scanRig(){
+        function scanRig() {
 
-avatar.traverse((obj)=>{
+            avatar.traverse((obj) => {
 
-const n = obj.name.toLowerCase();
+                const n = obj.name.toLowerCase();
 
-if(obj.isBone){
+                if (obj.isBone) {
 
-if(n.includes("head")) headBone=obj;
-if(n.includes("spine")) spineBone=obj;
-if(n.includes("leftarm") || n.includes("leftshoulder")) leftArm=obj;
-if(n.includes("rightarm") || n.includes("rightshoulder")) rightArm=obj;
+                    if (n.includes("head")) headBone = obj;
+                    if (n.includes("spine")) spineBone = obj;
+                    if (n.includes("leftarm") || n.includes("leftshoulder")) leftArm = obj;
+                    if (n.includes("rightarm") || n.includes("rightshoulder")) rightArm = obj;
 
-}
+                }
 
-if(obj.isMesh && obj.morphTargetDictionary){
-faceMeshes.push(obj);
-}
+                if (obj.isMesh && obj.morphTargetDictionary) {
+                    faceMeshes.push(obj);
+                }
 
-});
+            });
 
-}
+        }
 
-/* ------------------------------------ */
-/* ANIMATION LOOP */
-/* ------------------------------------ */
+        /* ------------------------------------ */
+        /* ANIMATION LOOP */
+        /* ------------------------------------ */
 
-function animate(){
+        function animate() {
 
-requestAnimationFrame(animate);
+            requestAnimationFrame(animate);
 
-const dt = clock.getDelta();
-t += dt;
+            const dt = clock.getDelta();
+            t += dt;
 
-/* Idle breathing */
-if(spineBone){
-spineBone.rotation.x =
-Math.sin(t*1.5)*0.02;
-}
+            /* Idle breathing */
+            if (spineBone) {
+                spineBone.rotation.x =
+                    Math.sin(t * 1.5) * 0.02;
+            }
 
-/* subtle sway */
-if(avatar){
-avatar.rotation.y =
-Math.sin(t*0.6)*0.025;
-}
+            /* subtle sway */
+            if (avatar) {
+                avatar.rotation.y =
+                    Math.sin(t * 0.6) * 0.025;
+            }
 
-/* random blink illusion */
-if(headBone){
-headBone.rotation.z =
-Math.sin(t*0.25)*0.01;
-}
+            /* random blink illusion */
+            if (headBone) {
+                headBone.rotation.z =
+                    Math.sin(t * 0.25) * 0.01;
+            }
 
-/* listening */
-if(listening && headBone){
-headBone.rotation.x = -0.06;
-}
+            /* listening */
+            if (listening && headBone) {
+                headBone.rotation.x = -0.06;
+            }
 
-/* thinking */
-if(thinking && headBone){
-headBone.rotation.y =
-Math.sin(t*2.5)*0.05;
-}
+            /* thinking */
+            if (thinking && headBone) {
+                headBone.rotation.y =
+                    Math.sin(t * 2.5) * 0.05;
+            }
 
-/* speaking mode */
-if(speaking){
+            /* speaking mode */
+            if (speaking) {
 
-lipSync();
-talkGesture();
+                lipSync();
+                talkGesture();
 
-}
+            }
 
-renderer.render(scene,camera);
+            renderer.render(scene, camera);
 
-}
+        }
 
-/* ------------------------------------ */
-/* FACE CONTROLS */
-/* ------------------------------------ */
+        /* ------------------------------------ */
+        /* FACE CONTROLS */
+        /* ------------------------------------ */
 
-function setMorph(name,val){
+        function setMorph(name, val) {
 
-faceMeshes.forEach(mesh=>{
+            faceMeshes.forEach(mesh => {
 
-const dict = mesh.morphTargetDictionary;
+                const dict = mesh.morphTargetDictionary;
 
-if(dict && dict[name] !== undefined){
+                if (dict && dict[name] !== undefined) {
 
-mesh.morphTargetInfluences[
-dict[name]
-] = val;
+                    mesh.morphTargetInfluences[
+                        dict[name]
+                    ] = val;
 
-}
+                }
 
-});
+            });
 
-}
+        }
 
-function resetFace(){
+        function resetFace() {
 
-setMorph("mouthSmile",0);
-setMorph("mouthOpen",0);
+            setMorph("mouthSmile", 0);
+            setMorph("mouthOpen", 0);
 
-}
+        }
 
-function lipSync(){
+        function lipSync() {
 
-setMorph(
-"mouthOpen",
-0.15 + Math.random()*0.55
-);
+            setMorph(
+                "mouthOpen",
+                0.15 + Math.random() * 0.55
+            );
 
-}
+        }
 
-/* ------------------------------------ */
-/* EMOTION ENGINE */
-/* ------------------------------------ */
+        /* ------------------------------------ */
+        /* EMOTION ENGINE */
+        /* ------------------------------------ */
 
-function applyEmotion(emotion){
+        function applyEmotion(emotion) {
 
-resetFace();
+            resetFace();
 
-switch(emotion){
+            switch (emotion) {
 
-case "happy":
+                case "happy":
 
-setMorph("mouthSmile",0.8);
+                    setMorph("mouthSmile", 0.8);
 
-if(headBone) headBone.rotation.x = -0.04;
+                    if (headBone) headBone.rotation.x = -0.04;
 
-break;
+                    break;
 
-case "sad":
+                case "sad":
 
-if(headBone) headBone.rotation.x = 0.10;
+                    if (headBone) headBone.rotation.x = 0.10;
 
-if(spineBone) spineBone.rotation.x = 0.05;
+                    if (spineBone) spineBone.rotation.x = 0.05;
 
-break;
+                    break;
 
-case "angry":
+                case "angry":
 
-if(headBone) headBone.rotation.y = 0.08;
+                    if (headBone) headBone.rotation.y = 0.08;
 
-break;
+                    break;
 
-case "fear":
+                case "fear":
 
-setMorph("mouthOpen",0.3);
+                    setMorph("mouthOpen", 0.3);
 
-camera.position.z = 1.85;
+                    camera.position.z = 1.85;
 
-break;
+                    break;
 
-case "surprise":
+                case "surprise":
 
-setMorph("mouthOpen",0.75);
+                    setMorph("mouthOpen", 0.75);
 
-if(headBone) headBone.rotation.x = -0.10;
+                    if (headBone) headBone.rotation.x = -0.10;
 
-break;
+                    break;
 
-default:
+                default:
 
-resetPose();
+                    resetPose();
 
-}
+            }
 
-}
+        }
 
-/* ------------------------------------ */
-/* GESTURES */
-/* ------------------------------------ */
+        /* ------------------------------------ */
+        /* GESTURES */
+        /* ------------------------------------ */
 
-function performGesture(g){
+        function performGesture(g) {
 
-switch(g){
+            switch (g) {
 
-case "slight_nod":
-nod();
-break;
+                case "slight_nod":
+                    nod();
+                    break;
 
-case "slow_head_tilt":
-tilt();
-break;
+                case "slow_head_tilt":
+                    tilt();
+                    break;
 
-case "lean_forward":
-leanForward();
-break;
+                case "lean_forward":
+                    leanForward();
+                    break;
 
-case "firm_posture":
-firm();
-break;
+                case "firm_posture":
+                    firm();
+                    break;
 
-default:
-break;
+                default:
+                    break;
 
-}
+            }
 
-}
+        }
 
-function nod(){
+        function nod() {
 
-if(!headBone) return;
+            if (!headBone) return;
 
-headBone.rotation.x = 0.18;
+            headBone.rotation.x = 0.18;
 
-setTimeout(()=>{
-headBone.rotation.x = 0;
-},350);
+            setTimeout(() => {
+                headBone.rotation.x = 0;
+            }, 350);
 
-}
+        }
 
-function tilt(){
+        function tilt() {
 
-if(!headBone) return;
+            if (!headBone) return;
 
-headBone.rotation.z = 0.16;
+            headBone.rotation.z = 0.16;
 
-setTimeout(()=>{
-headBone.rotation.z = 0;
-},700);
+            setTimeout(() => {
+                headBone.rotation.z = 0;
+            }, 700);
 
-}
+        }
 
-function leanForward(){
+        function leanForward() {
 
-camera.position.z = 1.45;
+            camera.position.z = 1.45;
 
-setTimeout(()=>{
-camera.position.z = 1.7;
-},800);
+            setTimeout(() => {
+                camera.position.z = 1.7;
+            }, 800);
 
-}
+        }
 
-function firm(){
+        function firm() {
 
-if(spineBone){
+            if (spineBone) {
 
-spineBone.rotation.x = -0.04;
+                spineBone.rotation.x = -0.04;
 
-setTimeout(()=>{
-spineBone.rotation.x = 0;
-},600);
+                setTimeout(() => {
+                    spineBone.rotation.x = 0;
+                }, 600);
 
-}
+            }
 
-}
+        }
 
-/* Talking hand gestures */
-function talkGesture(){
+        /* Talking hand gestures */
+        function talkGesture() {
 
-if(leftArm){
-leftArm.rotation.z = Math.sin(t*3)*0.04;
-leftArm.rotation.x = 0.05;
-}
+            if (leftArm) {
+                leftArm.rotation.z = Math.sin(t * 3) * 0.04;
+                leftArm.rotation.x = 0.05;
+            }
 
-if(rightArm){
-rightArm.rotation.z = -Math.sin(t*3)*0.04;
-rightArm.rotation.x = 0.05;
-}
+            if (rightArm) {
+                rightArm.rotation.z = -Math.sin(t * 3) * 0.04;
+                rightArm.rotation.x = 0.05;
+            }
 
-}
+        }
 
-/* reset */
-function resetPose(){
+        /* reset */
+        function resetPose() {
 
-camera.position.z = 1.7;
+            camera.position.z = 1.7;
 
-if(headBone)
-headBone.rotation.set(0,0,0);
+            if (headBone)
+                headBone.rotation.set(0, 0, 0);
 
-if(spineBone)
-spineBone.rotation.set(0,0,0);
+            if (spineBone)
+                spineBone.rotation.set(0, 0, 0);
 
-if(leftArm)
-leftArm.rotation.set(0,0,0);
+            if (leftArm)
+                leftArm.rotation.set(0, 0, 0);
 
-if(rightArm)
-rightArm.rotation.set(0,0,0);
+            if (rightArm)
+                rightArm.rotation.set(0, 0, 0);
 
-}
+        }
 
-/* ------------------------------------ */
-/* MEDIA */
-/* ------------------------------------ */
+        /* ------------------------------------ */
+        /* MEDIA */
+        /* ------------------------------------ */
 
-async function startMedia(){
+        async function startMedia() {
 
-if(mediaStarted) return;
-mediaStarted = true;
+            if (mediaStarted) return;
+            mediaStarted = true;
 
-const stream = await navigator.mediaDevices.getUserMedia({
-video:true,
-audio:{
-echoCancellation:true,
-noiseSuppression:true,
-autoGainControl:true
-}
-});
+            const stream = await navigator.mediaDevices.getUserMedia({
+                video: true,
+                audio: {
+                    echoCancellation: true,
+                    noiseSuppression: true,
+                    autoGainControl: true
+                }
+            });
 
-const video = document.getElementById("video");
-video.srcObject = stream;
+            const video = document.getElementById("video");
+            video.srcObject = stream;
 
-/* AUDIO */
+            /* AUDIO */
 
-const ctx = new AudioContext({sampleRate:16000});
+            const ctx = new AudioContext({ sampleRate: 16000 });
 
-const input = ctx.createMediaStreamSource(stream);
+            const input = ctx.createMediaStreamSource(stream);
 
-const processor = ctx.createScriptProcessor(16384,1,1);
+            const processor = ctx.createScriptProcessor(16384, 1, 1);
 
-processor.onaudioprocess=(e)=>{
+            processor.onaudioprocess = (e) => {
 
-if(isAgentSpeaking) return;
+                if (isAgentSpeaking) return;
 
-const data = e.inputBuffer.getChannelData(0);
+                const data = e.inputBuffer.getChannelData(0);
 
-if(ws && ws.readyState===1){
+                if (ws && ws.readyState === 1) {
 
-ws.send(JSON.stringify({
-type:"audio_chunk",
-data:Array.from(data)
-}));
+                    ws.send(JSON.stringify({
+                        type: "audio_chunk",
+                        data: Array.from(data)
+                    }));
 
-}
+                }
 
-};
+            };
 
-const gain = ctx.createGain();
-gain.gain.value = 0;
+            const gain = ctx.createGain();
+            gain.gain.value = 0;
 
-input.connect(processor);
-processor.connect(gain);
-gain.connect(ctx.destination);
+            input.connect(processor);
+            processor.connect(gain);
+            gain.connect(ctx.destination);
 
-/* FACE STREAMING */
+            /* FACE STREAMING */
 
-const canvas = document.createElement("canvas");
-const cctx = canvas.getContext("2d");
+            const canvas = document.createElement("canvas");
+            const cctx = canvas.getContext("2d");
 
-faceInterval = setInterval(()=>{
+            faceInterval = setInterval(() => {
 
-if(!ws || ws.readyState!==1) return;
+                if (!ws || ws.readyState !== 1) return;
 
-canvas.width = 320;
-canvas.height = 240;
+                canvas.width = 320;
+                canvas.height = 240;
 
-cctx.drawImage(video,0,0,320,240);
+                cctx.drawImage(video, 0, 0, 320, 240);
 
-const frame = canvas.toDataURL("image/jpeg",0.6);
+                const frame = canvas.toDataURL("image/jpeg", 0.6);
 
-ws.send(JSON.stringify({
-type:"video_frame",
-data:frame
-}));
+                ws.send(JSON.stringify({
+                    type: "video_frame",
+                    data: frame
+                }));
 
-},1800);
+            }, 1800);
 
-}
+        }
 
-/* ------------------------------------ */
-/* WS */
-/* ------------------------------------ */
+        /* ------------------------------------ */
+        /* WS */
+        /* ------------------------------------ */
 
-function connectWS(){
+        function connectWS() {
 
-ws = new WebSocket(
-"ws://127.0.0.1:8000/ws/multimodal"
-);
+            ws = new WebSocket(
+                "ws://10.104.112.32:8000/ws/multimodal"
+            );
 
-ws.onopen=()=>{
-setStatus("Connected");
-};
+            ws.onopen = () => {
+                setStatus("Connected");
+            };
 
-ws.onclose=()=>{
-setStatus("Disconnected");
-};
+            ws.onclose = () => {
+                setStatus("Disconnected");
+            };
 
-ws.onerror=()=>{
-setStatus("Connection Error");
-};
+            ws.onerror = () => {
+                setStatus("Connection Error");
+            };
 
-ws.onmessage=(event)=>{
+            ws.onmessage = (event) => {
 
-const data =
-JSON.parse(event.data);
+                const data =
+                    JSON.parse(event.data);
 
-if(data.status){
+                if (data.status) {
 
-if(data.status==="listening"){
-listening=true;
-thinking=false;
-}
+                    if (data.status === "listening") {
+                        listening = true;
+                        thinking = false;
+                    }
 
-return;
-}
+                    return;
+                }
 
-listening=false;
-thinking=true;
+                listening = false;
+                thinking = true;
 
-if(data.text){
+                if (data.text) {
 
-document.getElementById("output")
-.innerText = data.text;
+                    document.getElementById("output")
+                        .innerText = data.text;
 
-}
+                }
 
-if(data.agent_emotion)
-applyEmotion(data.agent_emotion);
+                if (data.agent_emotion)
+                    applyEmotion(data.agent_emotion);
 
-if(data.gesture)
-performGesture(data.gesture);
+                if (data.gesture)
+                    performGesture(data.gesture);
 
-if(data.audio_file){
+                if (data.audio_file) {
 
-const audio =
-new Audio(
-"data:audio/wav;base64," +
-data.audio_file
-);
+                    const audio =
+                        new Audio(
+                            "data:audio/wav;base64," +
+                            data.audio_file
+                        );
 
-audio.onplay=()=>{
-speaking=true;
-thinking=false;
-isAgentSpeaking = true;
-};
+                    audio.onplay = () => {
+                        speaking = true;
+                        thinking = false;
+                        isAgentSpeaking = true;
+                    };
 
-audio.onended=()=>{
-speaking=false;
-isAgentSpeaking = false;
-resetPose();
-resetFace();
-};
+                    audio.onended = () => {
+                        speaking = false;
+                        isAgentSpeaking = false;
+                        resetPose();
+                        resetFace();
+                    };
 
-audio.play();
+                    audio.play();
 
-}
+                }
 
-};
+            };
 
-}
+        }
 
-function setStatus(x){
-document.getElementById("status")
-.innerText = x;
-}
+        function setStatus(x) {
+            document.getElementById("status")
+                .innerText = x;
+        }
 
-/* ------------------------------------ */
-/* TEXT */
-/* ------------------------------------ */
+        /* ------------------------------------ */
+        /* TEXT */
+        /* ------------------------------------ */
 
-window.sendText = function(){
+        window.sendText = function () {
 
-const box =
-document.getElementById("textInput");
+            const box =
+                document.getElementById("textInput");
 
-const msg = box.value.trim();
+            const msg = box.value.trim();
 
-if(!msg) return;
+            if (!msg) return;
 
-if(!ws || ws.readyState!==1){
-alert("Backend not connected");
-return;
-}
+            if (!ws || ws.readyState !== 1) {
+                alert("Backend not connected");
+                return;
+            }
 
-thinking=true;
+            thinking = true;
 
-ws.send(JSON.stringify({
+            ws.send(JSON.stringify({
 
-type:"text",
-text:msg,
-face_emotion:"neutral"
+                type: "text",
+                text: msg,
+                face_emotion: "neutral"
 
-}));
+            }));
 
-box.value="";
+            box.value = "";
 
-}
+        }
 
-/* ------------------------------------ */
-/* START STOP */
-/* ------------------------------------ */
+        /* ------------------------------------ */
+        /* START STOP */
+        /* ------------------------------------ */
 
-window.startConversation =
-async function(){
+        window.startConversation =
+            async function () {
 
-if(started) return;
+                if (started) return;
 
-started = true;
+                started = true;
 
-connectWS();
+                connectWS();
 
-setTimeout(async ()=>{
-await startMedia();
-},500);
+                setTimeout(async () => {
+                    await startMedia();
+                }, 500);
 
-setStatus("Streaming started");
+                setStatus("Streaming started");
 
-}
+            }
 
-window.stopConversation = function(){
+        window.stopConversation = function () {
 
-started=false;
-mediaStarted=false;
+            started = false;
+            mediaStarted = false;
 
-if(faceInterval) clearInterval(faceInterval);
+            if (faceInterval) clearInterval(faceInterval);
 
-if(ws) ws.close();
+            if (ws) ws.close();
 
-setStatus("Stopped");
+            setStatus("Stopped");
 
-}
+        }
 
-/* ------------------------------------ */
-/* RESIZE */
-/* ------------------------------------ */
+        /* ------------------------------------ */
+        /* RESIZE */
+        /* ------------------------------------ */
 
-window.addEventListener("resize",()=>{
+        window.addEventListener("resize", () => {
 
-if(!renderer) return;
+            if (!renderer) return;
 
-const el =
-document.getElementById("avatarCanvas");
+            const el =
+                document.getElementById("avatarCanvas");
 
-renderer.setSize(
-el.clientWidth,
-el.clientHeight
-);
+            renderer.setSize(
+                el.clientWidth,
+                el.clientHeight
+            );
 
-camera.aspect =
-el.clientWidth/el.clientHeight;
+            camera.aspect =
+                el.clientWidth / el.clientHeight;
 
-camera.updateProjectionMatrix();
+            camera.updateProjectionMatrix();
 
-});
+        });
 
-initScene();
+        initScene();
 
-</script>
+    </script>
 
 </body>
+
 </html>
