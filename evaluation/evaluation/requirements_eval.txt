@@ -1,0 +1,36 @@
+# =============================================================================
+# requirements_eval.txt
+# Thesis Evaluation Framework — Dependencies
+# =============================================================================
+# Install with:
+#   pip install -r requirements_eval.txt
+#
+# Optional GPU acceleration for bert-score:
+#   pip install torch --index-url https://download.pytorch.org/whl/cu118
+# =============================================================================
+
+# ── Core NLP metrics ──────────────────────────────────────────────────────────
+nltk>=3.8.1
+rouge-score>=0.1.2
+scikit-learn>=1.3.0
+scipy>=1.11.0
+
+# ── (Optional) Semantic similarity ───────────────────────────────────────────
+# Uncomment to enable BERTScore — requires ~500MB model download
+# bert-score>=0.3.13
+# torch>=2.0.0
+
+# ── Data ──────────────────────────────────────────────────────────────────────
+datasets>=2.14.0       # HuggingFace datasets (ESConv)
+
+# ── OpenAI ────────────────────────────────────────────────────────────────────
+openai>=1.12.0
+
+# ── Visualisation ─────────────────────────────────────────────────────────────
+matplotlib>=3.7.0
+seaborn>=0.12.0
+numpy>=1.24.0
+pandas>=2.0.0
+
+# ── Progress bars ─────────────────────────────────────────────────────────────
+tqdm>=4.65.0

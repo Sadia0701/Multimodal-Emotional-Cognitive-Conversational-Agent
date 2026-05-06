@@ -1,0 +1,16 @@
+\begin{table}[ht]
+\centering
+\caption{Statistical Significance Tests (Paired $t$-test and Wilcoxon Signed-Rank)}
+\label{tab:significance}
+\begin{tabular}{llcccc}
+\toprule
+\textbf{Comparison} & \textbf{Metric} & $t$-stat & $p$ ($t$-test) & $W$-stat & $p$ (Wilcoxon) \\
+\midrule
+Proposed vs no_cognition & ROUGE-L & 106.001 & 0.0000$^{*}$ & 0.0 & 0.0000$^{*}$ \\
+Proposed vs no_cognition & BLEU-1 & 98.462 & 0.0000$^{*}$ & 0.0 & 0.0000$^{*}$ \\
+Proposed vs vanilla_gpt & ROUGE-L & 93.032 & 0.0000$^{*}$ & 0.0 & 0.0000$^{*}$ \\
+Proposed vs vanilla_gpt & BLEU-1 & 885.060 & 0.0000$^{*}$ & 0.0 & 0.0000$^{*}$ \\
+\bottomrule
+\multicolumn{6}{l}{\footnotesize $^{*}p < 0.05$} \\
+\end{tabular}
+\end{table}

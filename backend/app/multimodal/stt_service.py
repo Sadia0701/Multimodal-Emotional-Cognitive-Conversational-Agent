@@ -107,13 +107,11 @@ class STTService:
     def __init__(self): 
         print("Loading Whisper base/small on CPU...")
 
-        device = "cuda" if torch.cuda.is_available() else "cpu"
-        
         self.model = WhisperModel(
-            "medium",
-            device=device,
-            compute_type="float16" if device == "cuda" else "int8"
-)
+            "small",
+            device="cpu",
+            compute_type="int8"
+        )
         
 
         print("Whisper ready.")
@@ -143,4 +141,12 @@ class STTService:
             device="cuda",
             compute_type="float16"
         )
+        #Add this code for GPU now
+        device = "cuda" if torch.cuda.is_available() else "cpu"
+        
+        self.model = WhisperModel(
+            "medium",
+            device=device,
+            compute_type="float16" if device == "cuda" else "int8"
+)
 """

@@ -1,40 +1,114 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Embodied Cognitive Agent v3</title>
-<link rel="icon" href="data:,">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <title>Embodied Cognitive Agent v3</title>
+    <link rel="icon" href="data:,">
 
-<style>
-*{margin:0;padding:0;box-sizing:border-box;}
-body{
-height:100vh;overflow:hidden;font-family:Segoe UI,Arial;
-background:radial-gradient(circle at top right,#1e3a8a,#020617 60%),linear-gradient(135deg,#020617,#111827);
-color:white;
-}
-#main{display:grid;grid-template-columns:2fr 1fr;gap:12px;padding:12px;height:100vh;}
-.panel{
-background:rgba(255,255,255,.05);
-border:1px solid rgba(255,255,255,.08);
-border-radius:20px;
-backdrop-filter:blur(14px);
-box-shadow:0 0 25px rgba(0,0,0,.35);
-overflow:hidden;
-}
-#left{display:flex;flex-direction:column;padding:10px;}
-#title{padding:6px;font-size:18px;font-weight:700;}
-#avatarCanvas{flex:1;border-radius:18px;background:radial-gradient(circle at center,#1e293b,#020617);}
-#right{display:flex;flex-direction:column;gap:12px;padding:12px;}
-#video{width:100%;height:220px;object-fit:cover;border-radius:16px;background:#000;}
-#status{padding:10px;border-radius:14px;background:rgba(16,185,129,.10);}
-#output{flex:1;padding:12px;border-radius:16px;background:rgba(255,255,255,.04);overflow:auto;}
-.row{display:flex;gap:8px;}
-input{flex:1;padding:12px;border-radius:14px;background:#0f172a;color:white;}
-button{padding:12px;border-radius:14px;background:linear-gradient(135deg,#2563eb,#06b6d4);color:white;font-weight:700;}
-</style>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-<script type="importmap">
+        body {
+            height: 100vh;
+            overflow: hidden;
+            font-family: Segoe UI, Arial;
+            background: radial-gradient(circle at top right, #1e3a8a, #020617 60%), linear-gradient(135deg, #020617, #111827);
+            color: white;
+        }
+
+        #main {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 12px;
+            padding: 12px;
+            height: 100vh;
+        }
+
+        .panel {
+            background: rgba(255, 255, 255, .05);
+            border: 1px solid rgba(255, 255, 255, .08);
+            border-radius: 20px;
+            backdrop-filter: blur(14px);
+            box-shadow: 0 0 25px rgba(0, 0, 0, .35);
+            overflow: hidden;
+        }
+
+        #left {
+            display: flex;
+            flex-direction: column;
+            padding: 10px;
+        }
+
+        #title {
+            padding: 6px;
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        #avatarCanvas {
+            flex: 1;
+            border-radius: 18px;
+            background: radial-gradient(circle at center, #1e293b, #020617);
+        }
+
+        #right {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            padding: 12px;
+        }
+
+        #video {
+            width: 100%;
+            height: 220px;
+            object-fit: cover;
+            border-radius: 16px;
+            background: #000;
+        }
+
+        #status {
+            padding: 10px;
+            border-radius: 14px;
+            background: rgba(16, 185, 129, .10);
+        }
+
+        #output {
+            flex: 1;
+            padding: 12px;
+            border-radius: 16px;
+            background: rgba(255, 255, 255, .04);
+            overflow: auto;
+        }
+
+        .row {
+            display: flex;
+            gap: 8px;
+        }
+
+        input {
+            flex: 1;
+            padding: 12px;
+            border-radius: 14px;
+            background: #0f172a;
+            color: white;
+        }
+
+        button {
+            padding: 12px;
+            border-radius: 14px;
+            background: linear-gradient(135deg, #2563eb, #06b6d4);
+            color: white;
+            font-weight: 700;
+        }
+    </style>
+
+    <script type="importmap">
 {
 "imports":{
 "three":"https://unpkg.com/three@0.158.0/build/three.module.js",
@@ -46,316 +120,336 @@ button{padding:12px;border-radius:14px;background:linear-gradient(135deg,#2563eb
 
 <body>
 
-<div id="main">
-
-<div id="left" class="panel">
-<div id="title">Embodied Cognitive Conversational Agent</div>
-<div id="avatarCanvas"></div>
-</div>
-
-<div id="right" class="panel">
+    <div id="main">
+
+        <div id="left" class="panel">
+            <div id="title">Embodied Cognitive Conversational Agent</div>
+            <div id="avatarCanvas"></div>
+        </div>
+
+        <div id="right" class="panel">
 
-<video id="video" autoplay muted playsinline></video>
-
-<div id="status">Disconnected</div>
+            <video id="video" autoplay muted playsinline></video>
+
+            <div id="status">Disconnected</div>
 
-<div class="row">
-<input id="textInput" placeholder="Type your message...">
-<button onclick="sendText()">Send</button>
-</div>
-
-<div class="row">
-<button onclick="startConversation()">Start</button>
-<button onclick="stopConversation()">Stop</button>
-</div>
-
-<div id="output">Agent ready.</div>
-
-</div>
-
-</div>
-
-<script type="module">
-
-import * as THREE from "three";
-import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
-
-/* GLOBALS */
-let scene,camera,renderer,avatar,clock;
-let ws=null;
-let speaking=false,listening=false,thinking=false;
-let isAgentSpeaking=false;
-let headBone=null,spineBone=null,leftArm=null,rightArm=null;
-let faceMeshes=[];
-let t=0,faceInterval=null;
-
-/* INIT */
-function initScene(){
-
-clock=new THREE.Clock();
-scene=new THREE.Scene();
-
-camera=new THREE.PerspectiveCamera(35,2,0.1,1000);
-
-/* FIXED CAMERA */
-camera.position.set(0,1.45,2.2);
-camera.lookAt(0,1.3,0);
-
-renderer=new THREE.WebGLRenderer({alpha:true,antialias:true});
-renderer.setPixelRatio(window.devicePixelRatio);
-
-const canvas=document.getElementById("avatarCanvas");
-renderer.setSize(canvas.clientWidth,canvas.clientHeight);
-canvas.appendChild(renderer.domElement);
-
-/* LIGHT */
-scene.add(new THREE.HemisphereLight(0xffffff,0x223344,2));
-const key=new THREE.DirectionalLight(0xffffff,2);
-key.position.set(1,2,2);
-scene.add(key);
-
-loadAvatar();
-animate();
-}
-
-/* LOAD AVATAR */
-function loadAvatar(){
-new GLTFLoader().load("./girl_avatar.glb",(gltf)=>{
-avatar=gltf.scene;
-
-/* CENTER FIX */
-avatar.scale.set(1.4,1.4,1.4);
-avatar.position.set(0,-1.15,0);
-
-scene.add(avatar);
-scanRig();
-});
-}
-
-function scanRig(){
-avatar.traverse(obj=>{
-const n=obj.name.toLowerCase();
-if(obj.isBone){
-if(n.includes("head")) headBone=obj;
-if(n.includes("spine")) spineBone=obj;
-if(n.includes("leftarm")||n.includes("leftshoulder")) leftArm=obj;
-if(n.includes("rightarm")||n.includes("rightshoulder")) rightArm=obj;
-}
-if(obj.isMesh && obj.morphTargetDictionary){
-faceMeshes.push(obj);
-}
-});
-}
-
-/* ANIMATION */
-function animate(){
-requestAnimationFrame(animate);
-
-const dt=clock.getDelta();
-t+=dt;
-
-if(spineBone) spineBone.rotation.x=Math.sin(t*1.5)*0.02;
-if(avatar) avatar.rotation.y=Math.sin(t*0.6)*0.02;
-if(headBone) headBone.rotation.z=Math.sin(t*0.25)*0.01;
-
-/* STATES */
-if(listening && headBone) headBone.rotation.x=-0.05;
-if(thinking && headBone) headBone.rotation.y=Math.sin(t*2)*0.04;
-
-/* SPEAKING */
-if(speaking){
-lipSync();
-talkGesture();
-}
-
-/* STABILIZE */
-if(headBone){
-headBone.rotation.x*=0.9;
-headBone.rotation.y*=0.9;
-}
-
-renderer.render(scene,camera);
-}
-
-/* FACE */
-function setMorph(n,v){
-faceMeshes.forEach(m=>{
-if(m.morphTargetDictionary[n]!==undefined){
-m.morphTargetInfluences[m.morphTargetDictionary[n]]=v;
-}
-});
-}
-function resetFace(){setMorph("mouthSmile",0);setMorph("mouthOpen",0);}
-function lipSync(){setMorph("mouthOpen",0.2+Math.random()*0.5);}
-
-/* EMOTION */
-function applyEmotion(e){
-resetFace();
-if(e==="happy") setMorph("mouthSmile",0.7);
-if(e==="sad" && headBone) headBone.rotation.x=0.1;
-}
-
-/* NATURAL HANDS */
-//Disable for now, fix later
-/*function talkGesture(){
-if(leftArm){
-leftArm.rotation.x=0.05+Math.sin(t*2)*0.05;
-leftArm.rotation.z=0.05;
-}
-if(rightArm){
-rightArm.rotation.x=0.05+Math.sin(t*2)*0.05;
-rightArm.rotation.z=-0.05;
-}
-}*/
-
-/* RESET */
-function resetPose(){
-if(headBone) headBone.rotation.set(0,0,0);
-if(spineBone) spineBone.rotation.set(0,0,0);
-if(leftArm) leftArm.rotation.set(0,0,0);
-if(rightArm) rightArm.rotation.set(0,0,0);
-}
-
-/* MEDIA */
-async function startMedia(){
-const stream=await navigator.mediaDevices.getUserMedia({video:true,audio:true});
-document.getElementById("video").srcObject=stream;
-
-/* AUDIO */
-const ctx=new AudioContext({sampleRate:16000});
-const input=ctx.createMediaStreamSource(stream);
-const proc=ctx.createScriptProcessor(4096,1,1);
-
-proc.onaudioprocess=e=>{
-if(isAgentSpeaking) return;
-if(ws && ws.readyState===1){
-ws.send(JSON.stringify({type:"audio_chunk",data:Array.from(e.inputBuffer.getChannelData(0))}));
-}
-};
-
-const gain=ctx.createGain();gain.gain.value=0;
-input.connect(proc);proc.connect(gain);gain.connect(ctx.destination);
-
-/* FACE STREAM */
-const canvas=document.createElement("canvas");
-const ctx2=canvas.getContext("2d");
-
-/*faceInterval=setInterval(()=>{
-if(!ws || ws.readyState!==1) return;
-
-canvas.width=224;canvas.height=224;
-ctx2.drawImage(video,0,0,224,224);
-
-ws.send(JSON.stringify({
-type:"video_frame",
-data:canvas.toDataURL("image/jpeg",0.6)
-}));
-
-},300);
-}*/
-
-let faceInterval;
-
-function startCamera(){
-
-    const video = document.getElementById("video");
-
-    navigator.mediaDevices.getUserMedia({ video: true })
-    .then(stream=>{
-        video.srcObject = stream;
-    });
-
-    faceInterval = setInterval(sendFrame, 800); // IMPORTANT
-}
-
-function stopCamera(){
-    clearInterval(faceInterval);
-}
-
-function sendFrame(){
-
-    const video = document.getElementById("video");
-
-    if(!video || !ws || ws.readyState !== 1) return;
-
-    const canvas = document.createElement("canvas");
-
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-
-    const ctx = canvas.getContext("2d");
-    ctx.drawImage(video, 0, 0);
-
-    const imageData = canvas.toDataURL("image/jpeg", 0.6);
-
-    ws.send(JSON.stringify({
-        type: "video_frame",
-        data: imageData
-    }));
-}
-
-/* WS */
-function connectWS(){
-ws=new WebSocket("ws://127.0.0.1:8000/ws/multimodal");
-
-ws.onopen=()=>setStatus("Connected");
-ws.onclose=()=>setStatus("Disconnected");
-
-ws.onmessage=(e)=>{
-const d=JSON.parse(e.data);
-
-if(d.status){
-if(d.status==="listening"){listening=true;thinking=false;}
-return;
-}
-
-listening=false;thinking=true;
-
-if(d.text) document.getElementById("output").innerText=d.text;
-
-if(d.agent_emotion) applyEmotion(d.agent_emotion);
-
-if(d.audio_file){
-const a=new Audio("data:audio/wav;base64,"+d.audio_file);
-
-a.onplay=()=>{speaking=true;isAgentSpeaking=true;thinking=false;}
-a.onended=()=>{speaking=false;isAgentSpeaking=false;resetPose();resetFace();};
-
-a.play();
-}
-};
-}
-
-function setStatus(x){document.getElementById("status").innerText=x;}
-
-/* TEXT */
-window.sendText=function(){
-const v=document.getElementById("textInput").value.trim();
-if(!v) return;
-if(!ws || ws.readyState!==1) return alert("Not connected");
-
-ws.send(JSON.stringify({type:"text",text:v,face_emotion:"neutral"}));
-document.getElementById("textInput").value="";
-}
-
-/* START */
-window.startConversation=async function(){
-connectWS();
-await startMedia();
-startCamera();   // ADD THIS
-setStatus("Streaming started");
-}
-
-/* STOP */
-window.stopConversation=function(){
-if(faceInterval) clearInterval(faceInterval);
-stopCamera();   // ADD THIS
-if(ws) ws.close();
-setStatus("Stopped");
-}
-}
-initScene();
-
-</script>
+            <div class="row">
+                <input id="textInput" placeholder="Type your message...">
+                <button onclick="sendText()">Send</button>
+            </div>
+
+            <div class="row">
+                <button onclick="startConversation()">Start</button>
+                <button onclick="stopConversation()">Stop</button>
+            </div>
+
+            <div id="output">Agent ready.</div>
+
+        </div>
+
+    </div>
+
+    <script type="module">
+
+        import * as THREE from "three";
+        import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+
+        /* GLOBALS */
+        let scene, camera, renderer, avatar, clock;
+        let ws = null;
+        let speaking = false, listening = false, thinking = false;
+        let isAgentSpeaking = false;
+        let headBone = null, spineBone = null, leftArm = null, rightArm = null;
+        let faceMeshes = [];
+        let t = 0, faceInterval = null;
+
+        /* INIT */
+        function initScene() {
+
+            clock = new THREE.Clock();
+            scene = new THREE.Scene();
+
+            camera = new THREE.PerspectiveCamera(35, 2, 0.1, 1000);
+
+            /* FIXED CAMERA */
+            camera.position.set(0, 1.45, 2.2);
+            camera.lookAt(0, 1.3, 0);
+
+            renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+            renderer.setPixelRatio(window.devicePixelRatio);
+
+            const canvas = document.getElementById("avatarCanvas");
+            renderer.setSize(canvas.clientWidth, canvas.clientHeight);
+            canvas.appendChild(renderer.domElement);
+
+            /* LIGHT */
+            scene.add(new THREE.HemisphereLight(0xffffff, 0x223344, 2));
+            const key = new THREE.DirectionalLight(0xffffff, 2);
+            key.position.set(1, 2, 2);
+            scene.add(key);
+
+            loadAvatar();
+            animate();
+        }
+
+        /* LOAD AVATAR */
+        function loadAvatar() {
+            new GLTFLoader().load("./girl_avatar.glb", (gltf) => {
+                avatar = gltf.scene;
+
+                /* CENTER FIX */
+                avatar.scale.set(1.4, 1.4, 1.4);
+                avatar.position.set(0, -1.15, 0);
+
+                scene.add(avatar);
+                scanRig();
+            });
+        }
+
+        function scanRig() {
+            avatar.traverse(obj => {
+                const n = obj.name.toLowerCase();
+                if (obj.isBone) {
+                    if (n.includes("head")) headBone = obj;
+                    if (n.includes("spine")) spineBone = obj;
+                    if (n.includes("leftarm") || n.includes("leftshoulder")) leftArm = obj;
+                    if (n.includes("rightarm") || n.includes("rightshoulder")) rightArm = obj;
+                }
+                if (obj.isMesh && obj.morphTargetDictionary) {
+                    faceMeshes.push(obj);
+                }
+            });
+        }
+
+        /* ANIMATION */
+        function animate() {
+            requestAnimationFrame(animate);
+
+            const dt = clock.getDelta();
+            t += dt;
+
+            if (spineBone) spineBone.rotation.x = Math.sin(t * 1.5) * 0.02;
+            // if (avatar) avatar.rotation.y = Math.sin(t * 0.6) * 0.02; //cause weird rotation of avatar
+            if (headBone) headBone.rotation.z = Math.sin(t * 0.25) * 0.01;
+
+            /* STATES */
+            if (listening && headBone) headBone.rotation.x = -0.05;
+            if (thinking && headBone) headBone.rotation.y = Math.sin(t * 2) * 0.04;
+
+            /* SPEAKING */
+            if (speaking) {
+                lipSync();
+                //talkGesture();
+            }
+
+            /* STABILIZE */
+            if (headBone) {
+                headBone.rotation.x *= 0.9;
+                headBone.rotation.y *= 0.9;
+            }
+
+            renderer.render(scene, camera);
+        }
+
+        /* FACE */
+        function setMorph(n, v) {
+            faceMeshes.forEach(m => {
+                if (m.morphTargetDictionary[n] !== undefined) {
+                    m.morphTargetInfluences[m.morphTargetDictionary[n]] = v;
+                }
+            });
+        }
+        function resetFace() { setMorph("mouthSmile", 0); setMorph("mouthOpen", 0); }
+        function lipSync() { setMorph("mouthOpen", 0.2 + Math.random() * 0.5); }
+
+        /* EMOTION */
+        function applyEmotion(e) {
+            resetFace();
+            if (e === "happy") setMorph("mouthSmile", 0.7);
+            if (e === "sad" && headBone) headBone.rotation.x = 0.1;
+        }
+
+        /* NATURAL HANDS */
+        //Disable for now, fix later
+        /*function talkGesture(){
+        if(leftArm){
+        leftArm.rotation.x=0.05+Math.sin(t*2)*0.05;
+        leftArm.rotation.z=0.05;
+        }
+        if(rightArm){
+        rightArm.rotation.x=0.05+Math.sin(t*2)*0.05;
+        rightArm.rotation.z=-0.05;
+        }
+        }*/
+
+        /* RESET */
+        function resetPose() {
+            if (headBone) headBone.rotation.set(0, 0, 0);
+            if (spineBone) spineBone.rotation.set(0, 0, 0);
+            if (leftArm) leftArm.rotation.set(0, 0, 0);
+            if (rightArm) rightArm.rotation.set(0, 0, 0);
+        }
+
+        /* MEDIA */
+        async function startMedia() {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            document.getElementById("video").srcObject = stream;
+
+            /* AUDIO */
+            const ctx = new AudioContext({ sampleRate: 16000 });
+            const input = ctx.createMediaStreamSource(stream);
+            const proc = ctx.createScriptProcessor(4096, 1, 1);
+
+            proc.onaudioprocess = e => {
+                if (isAgentSpeaking) return;
+                if (ws && ws.readyState === 1) {
+                    ws.send(JSON.stringify({ type: "audio_chunk", data: Array.from(e.inputBuffer.getChannelData(0)) }));
+                }
+            };
+
+            const gain = ctx.createGain(); gain.gain.value = 0;
+            input.connect(proc); proc.connect(gain); gain.connect(ctx.destination);
+
+            /* FACE STREAM */
+            const canvas = document.createElement("canvas");
+            const ctx2 = canvas.getContext("2d");
+        
+            /*faceInterval=setInterval(()=>{
+            if(!ws || ws.readyState!==1) return;
+            
+            canvas.width=224;canvas.height=224;
+            ctx2.drawImage(video,0,0,224,224);
+            
+            ws.send(JSON.stringify({
+            type:"video_frame",
+            data:canvas.toDataURL("image/jpeg",0.6)
+            }));
+            
+            },300);*/
+            }
+            
+            //let faceInterval;
+            let video;
+
+            function startCamera() {
+
+                video = document.getElementById("video");
+
+                navigator.mediaDevices.getUserMedia({ video: true })
+                    .then(stream => {
+                        video.srcObject = stream;
+                    });
+
+                faceInterval = setInterval(sendFrame, 800); // IMPORTANT
+            }
+
+            function stopCamera() {
+                clearInterval(faceInterval);
+            }
+
+            function sendFrame() {
+
+                const video = document.getElementById("video");
+
+                if (!video || !ws || ws.readyState !== 1) return;
+
+                const canvas = document.createElement("canvas");
+
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+
+                const ctx = canvas.getContext("2d");
+                ctx.drawImage(video, 0, 0);
+
+                const imageData = canvas.toDataURL("image/jpeg", 0.6);
+
+                ws.send(JSON.stringify({
+                    type: "video_frame",
+                    data: imageData
+                }));
+            }
+
+            /* WS */
+            function connectWS() {
+                ws = new WebSocket("ws://127.0.0.1:8000/ws/multimodal");
+
+                ws.onopen = () => {
+                    console.log("WS CONNECTED");
+                    setStatus("Connected");
+                };
+
+                ws.onerror = (e) => {
+                    console.error("WS ERROR", e);
+                };
+
+                ws.onclose = () => {
+                    console.log("WS CLOSED");
+                    setStatus("Disconnected");
+                };
+
+                ws.onmessage = (e) => {
+                    const d = JSON.parse(e.data);
+
+                    if (d.status) {
+                        if (d.status === "listening") { listening = true; thinking = false; }
+                        return;
+                    }
+
+                    listening = false; thinking = true;
+
+                    if (d.text) document.getElementById("output").innerText = d.text;
+
+                    if (d.agent_emotion) applyEmotion(d.agent_emotion);
+
+                    if (d.audio_file) {
+                        const a = new Audio("data:audio/wav;base64," + d.audio_file);
+
+                        a.onplay = () => { speaking = true; isAgentSpeaking = true; thinking = false; }
+                        a.onended = () => { speaking = false; isAgentSpeaking = false; resetPose(); resetFace(); };
+
+                        a.play();
+                    }
+                };
+            }
+
+            function setStatus(x) { document.getElementById("status").innerText = x; }
+
+            /* TEXT */
+            window.sendText = function () {
+                const v = document.getElementById("textInput").value.trim();
+                if (!v) return;
+                if (!ws || ws.readyState !== 1) return alert("Not connected");
+
+                ws.send(JSON.stringify({ type: "text", text: v, face_emotion: "neutral" }));
+                document.getElementById("textInput").value = "";
+            }
+
+            /* START */
+            window.startConversation = async function () {
+
+                connectWS();  // FIRST
+
+                try {
+                    await startMedia();
+                    startCamera();
+                } catch (e) {
+                    console.error("Media error:", e);
+                }
+
+                setStatus("Streaming started");
+            }
+
+            /* STOP */
+            window.stopConversation = function () {
+                if (faceInterval) clearInterval(faceInterval);
+                stopCamera();   // ADD THIS
+                if (ws) ws.close();
+                setStatus("Stopped");
+            }
+        
+        initScene();
+
+    </script>
 </body>
+
 </html>

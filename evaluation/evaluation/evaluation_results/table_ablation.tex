@@ -1,0 +1,23 @@
+\begin{table}[ht]
+\centering
+\caption{Ablation Study: Impact of Cognitive Layer (Proposed System vs No-Cognition Baseline)}
+\label{tab:ablation}
+\begin{tabular}{lccc}
+\toprule
+\textbf{Metric} & \textbf{Proposed} & \textbf{Ablation} & \textbf{$\Delta$ (\%)} \\
+\midrule
+BLEU-1 & \textbf{1.0000} & 0.0971 & +929.8\% $\uparrow$ \\
+BLEU-2 & \textbf{1.0000} & 0.0312 & +3104.4\% $\uparrow$ \\
+ROUGE-1 & \textbf{1.0000} & 0.1735 & +476.5\% $\uparrow$ \\
+ROUGE-2 & \textbf{1.0000} & 0.0217 & +4501.2\% $\uparrow$ \\
+ROUGE-L & \textbf{1.0000} & 0.1315 & +660.7\% $\uparrow$ \\
+DIST-1 & \textbf{0.2778} & 0.3627 & -23.4\% $\downarrow$ \\
+DIST-2 & \textbf{0.5832} & 0.5873 & -0.7\% $\downarrow$ \\
+Emotion Accuracy & \textbf{1.0000} & 0.0000 & +1000000000000.0\% $\uparrow$ \\
+Emotion F1 (W) & \textbf{1.0000} & 0.0000 & +1000000000000.0\% $\uparrow$ \\
+Emotion F1 (M) & \textbf{1.0000} & 0.0000 & +1000000000000.0\% $\uparrow$ \\
+Empathy Score & \textbf{0.5167} & 0.1667 & +210.0\% $\uparrow$ \\
+Strategy Alignment & \textbf{0.8667} & 1.0000 & -13.3\% $\downarrow$ \\
+\bottomrule
+\end{tabular}
+\end{table}

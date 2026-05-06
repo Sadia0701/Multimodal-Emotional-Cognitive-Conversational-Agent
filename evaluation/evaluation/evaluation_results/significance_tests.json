@@ -1,0 +1,42 @@
+{
+  "no_cognition_ROUGE-L": {
+    "comparison": "Proposed vs Ablation (w/o Cognitive Layer)",
+    "metric": "ROUGE-L",
+    "t_stat": 1.271721048581165,
+    "p_ttest": 0.20406463194931662,
+    "significant_t": false,
+    "w_stat": 58712.0,
+    "p_wilcoxon": 0.22605526646701823,
+    "significant_w": false
+  },
+  "no_cognition_BLEU-1": {
+    "comparison": "Proposed vs Ablation (w/o Cognitive Layer)",
+    "metric": "BLEU-1",
+    "t_stat": -5.597437100111851,
+    "p_ttest": 3.594571091262837e-08,
+    "significant_t": true,
+    "w_stat": 43498.0,
+    "p_wilcoxon": 3.270525623038786e-09,
+    "significant_w": true
+  },
+  "vanilla_gpt_ROUGE-L": {
+    "comparison": "Proposed vs Vanilla GPT-4o Baseline",
+    "metric": "ROUGE-L",
+    "t_stat": 13.464425887758493,
+    "p_ttest": 1.804126839037182e-35,
+    "significant_t": true,
+    "w_stat": 21054.0,
+    "p_wilcoxon": 7.459225793029688e-38,
+    "significant_w": true
+  },
+  "vanilla_gpt_BLEU-1": {
+    "comparison": "Proposed vs Vanilla GPT-4o Baseline",
+    "metric": "BLEU-1",
+    "t_stat": 13.99250309664165,
+    "p_ttest": 9.101698707471704e-38,
+    "significant_t": true,
+    "w_stat": 20669.0,
+    "p_wilcoxon": 2.622983590850353e-38,
+    "significant_w": true
+  }
+}
