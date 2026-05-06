@@ -579,6 +579,14 @@ let leftArm   = null;
 let rightArm  = null;
 let faceMeshes = [];
 
+// Initial bind-pose rotations — captured once when avatar loads.
+// resetPose() restores THESE instead of (0,0,0).
+// (0,0,0) = T-pose identity = arms spread horizontal for this rig.)
+let initHead  = null;   // plain {x,y,z} snapshot
+let initSpine = null;
+let initArmL  = null;
+let initArmR  = null;
+
 // State
 let t             = 0;
 let faceInterval  = null;
@@ -666,15 +674,27 @@ function scanRig() {
   avatar.traverse(obj => {
     const n = obj.name.toLowerCase();
     if (obj.isBone) {
-      if (n.includes("head"))                                headBone  = obj;
-      if (n.includes("spine"))                               spineBone = obj;
-      if (n.includes("leftarm")  || n.includes("leftshoulder"))  leftArm  = obj;
-      if (n.includes("rightarm") || n.includes("rightshoulder")) rightArm = obj;
+      if (n.includes("head"))                                    { headBone  = obj; }
+      if (n.includes("spine"))                                   { spineBone = obj; }
+      // Match arm/shoulder but NOT forearm (forearm doesn't contain "leftarm")
+      if (n.includes("leftarm")  || n.includes("leftshoulder"))  { leftArm  = obj; }
+      if (n.includes("rightarm") || n.includes("rightshoulder")) { rightArm = obj; }
     }
     if (obj.isMesh && obj.morphTargetDictionary) {
       faceMeshes.push(obj);
     }
   });
+
+  // Snapshot the bind-pose rotations AFTER the full traverse
+  // (bones are now populated with the GLB's rest-pose values)
+  const snap = b => b ? { x: b.rotation.x, y: b.rotation.y, z: b.rotation.z } : null;
+  initHead  = snap(headBone);
+  initSpine = snap(spineBone);
+  initArmL  = snap(leftArm);
+  initArmR  = snap(rightArm);
+  console.log("[Rig] Bind-pose captured:",
+    { headBone: headBone?.name, spineBone: spineBone?.name,
+      leftArm: leftArm?.name, rightArm: rightArm?.name });
 }
 
 /* ── Animation loop ─────────────────────────────────────────── */
@@ -683,9 +703,9 @@ function animate() {
   const dt = clock.getDelta();
   t += dt;
 
-  // Idle breathing
-  if (spineBone) spineBone.rotation.x = Math.sin(t * 1.5) * 0.018;
-  if (headBone)  headBone.rotation.z  = Math.sin(t * 0.3) * 0.01;
+  // Idle breathing — added to bind-pose, not set absolutely
+  if (spineBone && initSpine) spineBone.rotation.x = initSpine.x + Math.sin(t * 1.5) * 0.018;
+  if (headBone  && initHead)  headBone.rotation.z  = initHead.z  + Math.sin(t * 0.3) * 0.01;
 
   // State overrides
   if (listening && headBone) headBone.rotation.x = -0.05;
@@ -728,14 +748,17 @@ function applyEmotion(e) {
   if (!avatar) return;
   resetFace();
 
-  // Head bone expressions
+  // Head bone expressions — start from bind-pose, add delta
   if (headBone) {
-    headBone.rotation.set(0, 0, 0);
-    if (e === "sad")     { headBone.rotation.x =  0.10; }
-    if (e === "angry")   { headBone.rotation.y =  0.06; }
-    if (e === "fear")    { headBone.rotation.x =  0.05; camera.position.z = 2.4; }
-    if (e === "surprise"){ headBone.rotation.x = -0.10; }
-    if (e === "happy")   { headBone.rotation.x = -0.04; }
+    const hx = initHead ? initHead.x : 0;
+    const hy = initHead ? initHead.y : 0;
+    const hz = initHead ? initHead.z : 0;
+    headBone.rotation.set(hx, hy, hz);
+    if (e === "sad")     { headBone.rotation.x += 0.10; }
+    if (e === "angry")   { headBone.rotation.y += 0.06; }
+    if (e === "fear")    { headBone.rotation.x += 0.05; camera.position.z = 2.4; }
+    if (e === "surprise"){ headBone.rotation.x -= 0.10; }
+    if (e === "happy")   { headBone.rotation.x -= 0.04; }
   }
 
   // Blend shapes
@@ -754,18 +777,20 @@ function applyEmotion(e) {
 /* ── Gesture ────────────────────────────────────────────────── */
 function performGesture(g) {
   if (!headBone) return;
-  if (g === "slight_nod")    { headBone.rotation.x =  0.18; setTimeout(() => headBone.rotation.x = 0, 380); }
-  if (g === "slow_head_tilt"){ headBone.rotation.z =  0.18; setTimeout(() => headBone.rotation.z = 0, 750); }
+  if (g === "slight_nod")    { const base = initHead?.x||0; headBone.rotation.x = base+0.18; setTimeout(() => { headBone.rotation.x = base; }, 380); }
+  if (g === "slow_head_tilt"){ const base = initHead?.z||0; headBone.rotation.z = base+0.18; setTimeout(() => { headBone.rotation.z = base; }, 750); }
   if (g === "lean_forward")  { camera.position.z = 1.9;     setTimeout(() => camera.position.z = 2.2, 850); }
-  if (g === "firm_posture" && spineBone) { spineBone.rotation.x = -0.06; setTimeout(() => spineBone.rotation.x = 0, 750); }
+  if (g === "firm_posture" && spineBone) { const base = initSpine?.x||0; spineBone.rotation.x = base-0.06; setTimeout(() => { spineBone.rotation.x = base; }, 750); }
 }
 
 function resetPose() {
   camera.position.z = 2.2;
-  if (headBone)  headBone.rotation.set(0, 0, 0);
-  if (spineBone) spineBone.rotation.set(0, 0, 0);
-  if (leftArm)   leftArm.rotation.set(0, 0, 0);
-  if (rightArm)  rightArm.rotation.set(0, 0, 0);
+  // Restore to the GLB bind-pose rotations — NOT (0,0,0) which is T-pose
+  const r = (bone, init) => { if (bone && init) bone.rotation.set(init.x, init.y, init.z); };
+  r(headBone,  initHead);
+  r(spineBone, initSpine);
+  r(leftArm,   initArmL);
+  r(rightArm,  initArmR);
 }
 
 /* ════════════════════════════════════════════════════════════════
@@ -890,10 +915,15 @@ function connectWS() {
 
     /* ── Status-only messages from backend ── */
     if (d.status) {
-      if (d.status === "listening")     { setAgentState("listening"); setMicActive(true); }
-      if (d.status === "face_updated")  { updateFaceEmo(d.face_emotion); }
-      if (d.status === "face_wait")     { /* throttled — ignore */ }
-      if (d.status === "buffering_audio") { /* still collecting speech — ignore */ }
+      if (d.status === "listening")       { setAgentState("listening"); setMicActive(true); }
+      if (d.status === "face_updated")    { updateFaceEmo(d.face_emotion); }
+      if (d.status === "face_wait")       { /* throttled — skip */ }
+      if (d.status === "buffering_audio") { /* still collecting — skip */ }
+      if (d.status === "silence")         { setAgentState("idle"); }
+      if (d.status === "no_text")         { setAgentState("idle"); console.log("[STT] No speech detected"); }
+      if (d.status === "stt_error")       { setAgentState("idle"); console.warn("[STT] Error:", d.detail); }
+      if (d.status === "busy")            { console.log("[STT] Still processing previous speech"); }
+      if (d.status === "too_short")       { setAgentState("idle"); }
       return;
     }
 
@@ -999,7 +1029,7 @@ async function startMedia() {
 
 /* ── Face frame sending ─────────────────────────────────────── */
 function startFaceCapture() {
-  faceInterval = setInterval(sendFaceFrame, 900);
+  faceInterval = setInterval(sendFaceFrame, 1400); // 1.4s — backend throttles at 1.2s anyway
 }
 
 function stopFaceCapture() {
