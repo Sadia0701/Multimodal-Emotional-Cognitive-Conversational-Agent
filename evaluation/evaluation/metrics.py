@@ -5,7 +5,6 @@ metrics.py  —  Evaluation Metrics for Thesis
 Implements every metric used in the evaluation chapter:
 
   Response Quality : BLEU-1/2, ROUGE-1/2/L, BERTScore (optional)
-  Fluency/Coherence: Perplexity — GPT-2 (primary) / N-gram LM (fallback)
   Diversity        : DIST-1, DIST-2
   Emotion          : Accuracy, Weighted-F1, per-class F1, Confusion Matrix
   Empathy          : Rule-based EmpScore (Sharma et al., 2020)
@@ -13,8 +12,6 @@ Implements every metric used in the evaluation chapter:
 
   NOTE: Strategy-Alignment removed — ceiling effect (all systems = 1.000),
         not informative as a differentiator across conditions.
-
-Statistical Tests  : paired t-test, Wilcoxon signed-rank test
 =============================================================================
 """
 
@@ -30,7 +27,6 @@ from sklearn.metrics import (
     accuracy_score, f1_score, classification_report,
     confusion_matrix,
 )
-from scipy import stats
 
 
 def word_tokenize(text: str) -> List[str]:
@@ -181,164 +177,6 @@ class MetricsCalculator:
     # conditions (ceiling effect), providing no discriminative signal.
 
     # =========================================================================
-    # PERPLEXITY  (Fluency / Coherence)
-    # =========================================================================
-
-    def perplexity(
-        self,
-        texts:      List[str],
-        references: Optional[List[str]] = None,
-    ) -> float:
-        """
-        Compute mean perplexity over a list of texts.
-
-        Strategy
-        --------
-        PRIMARY   — GPT-2 Small via HuggingFace Transformers.
-                    Lower PPL = more fluent / coherent response.
-                    Well-established in dialogue evaluation literature
-                    (Adiwardana et al., 2020; Roller et al., 2021).
-
-        FALLBACK  — Self-contained bigram language model with
-                    Laplace (add-1) smoothing, trained on the reference
-                    responses passed as `references`.
-                    This is equivalent in spirit: measures how well
-                    the generated text fits the in-domain distribution.
-
-        Returns
-        -------
-        float : mean perplexity (lower = better fluency/coherence)
-        """
-        ppl = self._gpt2_perplexity(texts)
-        if ppl is not None:
-            return ppl
-
-        # Fallback: n-gram LM on references
-        if references:
-            return self._ngram_perplexity(texts, references)
-
-        return float("nan")
-
-    def per_sample_perplexity(
-        self,
-        texts:      List[str],
-        references: Optional[List[str]] = None,
-    ) -> List[float]:
-        """Per-sample perplexity scores (for significance testing)."""
-        scores = self._gpt2_perplexity_list(texts)
-        if scores is not None:
-            return scores
-        if references:
-            return self._ngram_perplexity_list(texts, references)
-        return [float("nan")] * len(texts)
-
-    # ── GPT-2 implementation ─────────────────────────────────────────────────
-    def _gpt2_perplexity(self, texts: List[str]) -> Optional[float]:
-        scores = self._gpt2_perplexity_list(texts)
-        return float(np.mean(scores)) if scores is not None else None
-
-    def _gpt2_perplexity_list(self, texts: List[str]) -> Optional[List[float]]:
-        """
-        Compute per-sample GPT-2 perplexity.
-        Returns None if transformers / model not available.
-        """
-        try:
-            import torch
-            from transformers import AutoTokenizer, AutoModelForCausalLM
-
-            # Lazy-load — model is cached after first call
-            if not hasattr(self, "_gpt2_model"):
-                print("  Loading GPT-2 for perplexity scoring...")
-                self._gpt2_tok   = AutoTokenizer.from_pretrained("gpt2")
-                self._gpt2_model = AutoModelForCausalLM.from_pretrained("gpt2")
-                self._gpt2_model.eval()
-                print("  GPT-2 loaded.")
-
-            tok, model = self._gpt2_tok, self._gpt2_model
-            scores = []
-
-            with torch.no_grad():
-                for text in texts:
-                    if not text.strip():
-                        scores.append(float("inf"))
-                        continue
-                    enc = tok(
-                        text,
-                        return_tensors  = "pt",
-                        truncation      = True,
-                        max_length      = 512,
-                    )
-                    ids = enc.input_ids
-                    if ids.shape[1] < 2:
-                        scores.append(float("inf"))
-                        continue
-                    out = model(ids, labels=ids)
-                    scores.append(float(torch.exp(out.loss)))
-
-            return scores
-
-        except Exception as e:
-            # Silently fall through to n-gram fallback
-            if "connect" not in str(e).lower() and "forbidden" not in str(e).lower():
-                print(f"  ⚠ GPT-2 unavailable ({type(e).__name__}), using n-gram fallback")
-            return None
-
-    # ── N-gram LM fallback ───────────────────────────────────────────────────
-    def _ngram_perplexity(
-        self, texts: List[str], references: List[str]
-    ) -> float:
-        scores = self._ngram_perplexity_list(texts, references)
-        finite = [s for s in scores if np.isfinite(s)]
-        return float(np.mean(finite)) if finite else float("nan")
-
-    def _ngram_perplexity_list(
-        self, texts: List[str], references: List[str]
-    ) -> List[float]:
-        """
-        Bigram LM with Laplace smoothing trained on `references`.
-        PPL = exp( -1/N * sum(log P(w_i | w_{i-1})) )
-        """
-        # ── Build bigram LM from references ──────────────────────────────────
-        unigram: Dict[str, int] = Counter()
-        bigram:  Dict[tuple, int] = Counter()
-
-        for ref in references:
-            toks = ["<s>"] + word_tokenize(ref) + ["</s>"]
-            for tok in toks:
-                unigram[tok] += 1
-            for a, b in zip(toks, toks[1:]):
-                bigram[(a, b)] += 1
-
-        vocab_size = len(unigram)
-        total_uni  = sum(unigram.values())
-
-        def log_prob_bigram(prev: str, curr: str) -> float:
-            # Laplace (add-1) smoothed bigram probability
-            num = bigram.get((prev, curr), 0) + 1
-            den = unigram.get(prev, 0) + vocab_size
-            return np.log(num / den)
-
-        # ── Score each hypothesis ─────────────────────────────────────────────
-        scores = []
-        for text in texts:
-            if not text.strip():
-                scores.append(float("inf"))
-                continue
-            toks = ["<s>"] + word_tokenize(text) + ["</s>"]
-            if len(toks) < 2:
-                scores.append(float("inf"))
-                continue
-            log_sum = sum(
-                log_prob_bigram(toks[i], toks[i + 1])
-                for i in range(len(toks) - 1)
-            )
-            n   = len(toks) - 1
-            ppl = np.exp(-log_sum / n)
-            scores.append(float(ppl))
-
-        return scores
-
-    # =========================================================================
     # EFFICIENCY
     # =========================================================================
 
@@ -351,27 +189,8 @@ class MetricsCalculator:
         return float(np.mean([len(word_tokenize(t)) for t in texts]))
 
     # =========================================================================
-    # STATISTICAL SIGNIFICANCE
+    # PER-SAMPLE SCORES  (used for detailed analysis plots)
     # =========================================================================
-
-    @staticmethod
-    def paired_ttest(
-        scores_a: List[float], scores_b: List[float]
-    ) -> Tuple[float, float]:
-        """Paired t-test. Returns (t_stat, p_value)."""
-        t_stat, p_val = stats.ttest_rel(scores_a, scores_b)
-        return float(t_stat), float(p_val)
-
-    @staticmethod
-    def wilcoxon_test(
-        scores_a: List[float], scores_b: List[float]
-    ) -> Tuple[float, float]:
-        """Wilcoxon signed-rank test (non-parametric). Returns (stat, p_value)."""
-        try:
-            stat, p_val = stats.wilcoxon(scores_a, scores_b)
-            return float(stat), float(p_val)
-        except Exception:
-            return 0.0, 1.0
 
     def per_sample_rouge_l(
         self, references: List[str], hypotheses: List[str]
@@ -413,7 +232,6 @@ class MetricsCalculator:
         """
         Compute the full metrics dictionary used for the results table.
         Strategy-Alignment is excluded (ceiling effect, no discriminative value).
-        Perplexity is added as the fluency/coherence metric.
         """
         metrics: Dict[str, float] = {}
 
@@ -421,10 +239,6 @@ class MetricsCalculator:
         metrics["BLEU-1"]  = self.bleu_n(references, hypotheses, 1)
         metrics["BLEU-2"]  = self.bleu_n(references, hypotheses, 2)
         metrics.update(self.rouge_scores(references, hypotheses))
-
-        # Fluency / Coherence — PRIMARY metric addition
-        ppl = self.perplexity(hypotheses, references)
-        metrics["Perplexity"] = ppl
 
         # Diversity
         metrics["DIST-1"]  = self.distinct_n(hypotheses, 1)

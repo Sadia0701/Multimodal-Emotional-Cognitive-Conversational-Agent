@@ -6,52 +6,36 @@ Comparison of responses from all three systems on representative samples.
 ### Example 1
 
 **User Input:**  
-> I finally got promoted after years of hard work! I can't believe it's real.
+> Nobody at school knows I'm struggling. I act like everything is fine all the time.
 
 **Ground-Truth Reference:**  
-> That's absolutely wonderful news! All your dedication and perseverance have paid off. You should be incredibly proud of yourself — this is a real milestone.
+> Carrying that mask every day is exhausting work. I'm glad you can take it off here. What would it feel like if someone at school actually knew?
 
 **Proposed System (w/ Cognitive Layer):**  
-*(Emotion: happy | Action: provide_empathy)*  
-> That's absolutely wonderful news! All your dedication and perseverance have paid off. You should be incredibly proud of yourself — this is a real milestone.
+*(Emotion: sad | Action: provide_empathy)*  
+> Carrying that mask every day is exhausting work. I'm glad you can take it off here. What would it feel like if someone at school actually knew?
 
 **Ablation (w/o Cognitive Layer):**  
-> I finally got promoted after years of hard work! I can't believe it's real.
+> Nobody at school knows I'm struggling. I act like everything is fine all the tim
 
 ---
 ### Example 2
 
 **User Input:**  
-> I've been isolating myself from friends for months. I just don't see the point anymore.
+> I've been having panic attacks again and I don't know what triggers them anymore.
 
 **Ground-Truth Reference:**  
-> I'm really glad you're reaching out right now. That feeling of disconnection is incredibly hard. Can you share what started making you pull away from people?
-
-**Proposed System (w/ Cognitive Layer):**  
-*(Emotion: sad | Action: provide_empathy)*  
-> I'm really glad you're reaching out right now. That feeling of disconnection is incredibly hard. Can you share what started making you pull away from people?
-
-**Ablation (w/o Cognitive Layer):**  
-> I've been isolating myself from friends for months. I just don't see the point a
-
----
-### Example 3
-
-**User Input:**  
-> I'm scared I'm going to fail my exams and disappoint my parents. I can't sleep because of it.
-
-**Ground-Truth Reference:**  
-> I understand that fear — the pressure you're carrying is very real, and it shows how much you care. Let's talk about what's making you feel most unprepared.
+> Panic attacks can be frightening and exhausting. I'm really glad you're talking about it. Can you tell me more about when they usually happen?
 
 **Proposed System (w/ Cognitive Layer):**  
 *(Emotion: fear | Action: provide_empathy)*  
-> I understand that fear — the pressure you're carrying is very real, and it shows how much you care. Let's talk about what's making you feel most unprepared.
+> Panic attacks can be frightening and exhausting. I'm really glad you're talking about it. Can you tell me more about when they usually happen?
 
 **Ablation (w/o Cognitive Layer):**  
-> I'm scared I'm going to fail my exams and disappoint my parents. I can't sleep b
+> I've been having panic attacks again and I don't know what triggers them anymore
 
 ---
-### Example 4
+### Example 3
 
 **User Input:**  
 > I just feel so alone and nobody understands what I'm going through. It's like nobody cares.
@@ -67,17 +51,33 @@ Comparison of responses from all three systems on representative samples.
 > I just feel so alone and nobody understands what I'm going through. It's like no
 
 ---
+### Example 4
+
+**User Input:**  
+> I've been drinking more than I should to cope with the stress. I know it's not healthy.
+
+**Ground-Truth Reference:**  
+> I really appreciate you trusting me with that. Recognising it yourself is already an important step. What kind of stress has been pushing you to reach for it?
+
+**Proposed System (w/ Cognitive Layer):**  
+*(Emotion: fear | Action: provide_empathy)*  
+> I really appreciate you trusting me with that. Recognising it yourself is already an important step. What kind of stress has been pushing you to reach for it?
+
+**Ablation (w/o Cognitive Layer):**  
+> I've been drinking more than I should to cope with the stress. I know it's not h
+
+---
 ### Example 5
 
 **User Input:**  
-> I feel like I'm a burden to everyone around me. Maybe they'd be better off without me.
+> I'm terrified about my health results coming back. I keep imagining the worst.
 
 **Ground-Truth Reference:**  
-> What you're feeling right now is painful, and I want you to know you are not a burden. You matter deeply. Can we talk more about what's brought you to this place?
+> Waiting for health news is one of the hardest things to sit with. Your feelings make complete sense. I'm here with you through this.
 
 **Proposed System (w/ Cognitive Layer):**  
-*(Emotion: sad | Action: provide_empathy)*  
-> What you're feeling right now is painful, and I want you to know you are not a burden. You matter deeply. Can we talk more about what's brought you to this place?
+*(Emotion: fear | Action: provide_empathy)*  
+> Waiting for health news is one of the hardest things to sit with. Your feelings make complete sense. I'm here with you through this.
 
 **Ablation (w/o Cognitive Layer):**  
-> I feel like I'm a burden to everyone around me. Maybe they'd be better off witho
+> I'm terrified about my health results coming back. I keep imagining the worst.

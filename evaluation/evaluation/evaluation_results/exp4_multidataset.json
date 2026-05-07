@@ -1,0 +1,60 @@
+{
+  "iemocap": {
+    "with_cognition": {
+      "label": "Proposed",
+      "metrics": {
+        "Emotion-Acc": 1.0,
+        "Emotion-F1-W": 1.0,
+        "Emotion-F1-M": 1.0,
+        "Avg-Latency": 2.0718111562728883
+      }
+    },
+    "no_cognition": {
+      "label": "No Cognition",
+      "metrics": {
+        "Emotion-Acc": 1.0,
+        "Emotion-F1-W": 1.0,
+        "Emotion-F1-M": 1.0,
+        "Avg-Latency": 1.565857367515564
+      }
+    },
+    "vanilla_gpt": {
+      "label": "Vanilla GPT",
+      "metrics": {
+        "Emotion-Acc": 0.2,
+        "Emotion-F1-W": 0.06666666666666667,
+        "Emotion-F1-M": 0.08333333333333333,
+        "Avg-Latency": 1.5742818737030029
+      }
+    }
+  },
+  "meld": {
+    "with_cognition": {
+      "label": "Proposed",
+      "metrics": {
+        "Emotion-Acc": 1.0,
+        "Emotion-F1-W": 1.0,
+        "Emotion-F1-M": 1.0,
+        "Avg-Latency": 20.26233594894409
+      }
+    },
+    "no_cognition": {
+      "label": "No Cognition",
+      "metrics": {
+        "Emotion-Acc": 1.0,
+        "Emotion-F1-W": 1.0,
+        "Emotion-F1-M": 1.0,
+        "Avg-Latency": 1.28530743598938
+      }
+    },
+    "vanilla_gpt": {
+      "label": "Vanilla GPT",
+      "metrics": {
+        "Emotion-Acc": 0.18,
+        "Emotion-F1-W": 0.05491525423728814,
+        "Emotion-F1-M": 0.04358353510895884,
+        "Avg-Latency": 1.3514209604263305
+      }
+    }
+  }
+}

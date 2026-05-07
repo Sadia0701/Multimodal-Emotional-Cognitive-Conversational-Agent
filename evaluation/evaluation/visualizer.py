@@ -104,7 +104,6 @@ class ResultsVisualizer:
         self.plot_action_distribution()
         self.plot_latency_boxplot()
         self.plot_per_sample_rougel()
-        self.plot_perplexity()          # NEW — replaces strategy_alignment
         print("  ✓ All plots generated\n")
 
     # ── Fig 1: Response quality ───────────────────────────────────────────────
@@ -338,62 +337,3 @@ class ResultsVisualizer:
 
         self.save("fig8_per_sample_rougel.png", fig)
 
-    # ── Fig 9: Perplexity comparison ──────────────────────────────────────────
-    def plot_perplexity(self):
-        """
-        Grouped bar chart of mean perplexity per system.
-        Lower PPL = better fluency / coherence.
-        Annotates which method was used (GPT-2 or N-gram LM).
-        """
-        keys   = list(self.keys)
-        labels = [_SHORT[k] for k in keys]
-        vals   = [self.results[k]["metrics"].get("Perplexity", float("nan"))
-                  for k in keys]
-        colors = [_CMAP[k] for k in keys]
-
-        # Skip if all NaN
-        if all(np.isnan(v) for v in vals):
-            print("  ⚠ Perplexity values all NaN — skipping fig9")
-            return
-
-        # Replace NaN with 0 for plotting
-        plot_vals = [v if np.isfinite(v) else 0 for v in vals]
-
-        fig, ax = plt.subplots(figsize=(9, 6))
-        bars = ax.bar(labels, plot_vals, color=colors, width=0.45,
-                      edgecolor="white", linewidth=0.6)
-
-        for bar, v in zip(bars, vals):
-            label_txt = f"{v:.2f}" if np.isfinite(v) else "N/A"
-            ax.text(
-                bar.get_x() + bar.get_width() / 2,
-                bar.get_height() + max(plot_vals) * 0.02,
-                label_txt,
-                ha="center", va="bottom",
-                fontsize=10, fontweight="bold",
-            )
-
-        ax.set_ylabel("Perplexity (↓ lower is better)")
-        ax.set_title(
-            "Response Fluency — Perplexity Comparison\n"
-            "(GPT-2 / N-gram LM — lower = more fluent & coherent)"
-        )
-        ax.set_ylim(0, max(v for v in plot_vals if v > 0) * 1.3 + 1)
-
-        # Annotate best (lowest PPL)
-        finite_pairs = [(v, k) for v, k in zip(vals, keys) if np.isfinite(v)]
-        if finite_pairs:
-            best_val, best_key = min(finite_pairs)
-            best_idx = keys.index(best_key)
-            ax.annotate(
-                "Best",
-                xy=(best_idx, best_val),
-                xytext=(best_idx, best_val + max(plot_vals) * 0.12),
-                ha="center",
-                fontsize=9,
-                color=_CMAP[best_key],
-                arrowprops=dict(arrowstyle="->", color=_CMAP[best_key]),
-            )
-
-        _clean_ax(ax)
-        self.save("fig9_perplexity.png", fig)

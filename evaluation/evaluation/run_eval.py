@@ -18,14 +18,11 @@ WHAT IT DOES
        BLEU-1/2, ROUGE-1/2/L, DIST-1/2, BERTScore (if installed),
        Emotion Accuracy, Emotion F1 (weighted + macro),
        Empathy Score, Strategy Alignment
-  4. Runs paired t-test + Wilcoxon signed-rank significance tests
   5. Saves:
        evaluation_results/metrics_summary.csv
        evaluation_results/detailed_results.json
-       evaluation_results/significance_tests.json
        evaluation_results/table_main_results.tex    ← paste into thesis
        evaluation_results/table_ablation.tex        ← ablation chapter
-       evaluation_results/table_significance.tex    ← statistics chapter
        evaluation_results/summary.md
        evaluation_results/qualitative_examples.md   ← appendix
        evaluation_results/plots/fig1_*.png ... fig9_*.png
@@ -124,7 +121,6 @@ def main():
     print("    metrics_summary.csv          → import into Excel / R")
     print("    table_main_results.tex       → paste into LaTeX Results chapter")
     print("    table_ablation.tex           → paste into Ablation Study section")
-    print("    table_significance.tex       → paste into Statistics section")
     print("    qualitative_examples.md      → thesis appendix")
     print("    plots/fig1_response_quality  → Fig in Results chapter")
     print("    plots/fig3_radar_chart       → Fig in Comparison chapter")

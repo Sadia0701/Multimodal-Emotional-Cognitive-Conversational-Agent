@@ -1,0 +1,118 @@
+% ================================================================
+% AUTO-GENERATED — thesis_tables.tex
+% Copy-paste individual tables into your thesis chapters
+% ================================================================
+
+
+\begin{table}[ht]
+\centering
+\small
+\caption{Main Evaluation Results on ESConv (Proposed vs Baselines)}
+\label{tab:main}
+\begin{tabular}{lccccccc}
+\toprule
+\textbf{Condition} & \textbf{BLEU-1} & \textbf{BLEU-2} & \textbf{ROUGE-L} & \textbf{DIST-2} & \textbf{Acc.} & \textbf{F1-W} & \textbf{Empathy} \\
+\midrule
+Proposed (w/ Cognitive Layer) & 0.205 & \textbf{0.097} & \textbf{0.202} & 0.369 & \textbf{0.950} & \textbf{0.950} & 0.932 \\
+Ablation (w/o Cognitive Layer) & \textbf{0.208} & 0.093 & 0.189 & \textbf{0.397} & \textbf{0.950} & \textbf{0.950} & 0.870 \\
+Vanilla GPT-4o & 0.161 & 0.075 & 0.167 & 0.372 & 0.000 & 0.000 & \textbf{0.945} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+
+\begin{table}[ht]
+\centering
+\small
+\caption{Component Ablation Study — Effect of Each Cognitive Module}
+\label{tab:component_ablation}
+\begin{tabular}{lccccccc}
+\toprule
+\textbf{Condition} & \textbf{BLEU-1} & \textbf{BLEU-2} & \textbf{ROUGE-L} & \textbf{DIST-2} & \textbf{Acc.} & \textbf{F1-W} & \textbf{Empathy} \\
+\midrule
+Full Cognitive System & 0.212 & 0.102 & 0.203 & 0.373 & \textbf{0.950} & \textbf{0.950} & 0.935 \\
+No Emotional Module & 0.201 & 0.090 & 0.190 & 0.364 & \textbf{0.950} & \textbf{0.950} & 0.945 \\
+No Production Rules & 0.174 & 0.085 & 0.184 & 0.382 & \textbf{0.950} & \textbf{0.950} & \textbf{0.953} \\
+No Working Memory & \textbf{0.246} & \textbf{0.118} & \textbf{0.220} & 0.331 & \textbf{0.950} & \textbf{0.950} & 0.915 \\
+No Cognitive Layer & 0.214 & 0.094 & 0.195 & \textbf{0.405} & 0.000 & 0.000 & 0.835 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+
+\begin{table}[ht]
+\centering
+\small
+\caption{Modality Ablation — Contribution of Each Input Modality}
+\label{tab:modality_ablation}
+\begin{tabular}{lcccc}
+\toprule
+\textbf{Condition} & \textbf{BLEU-1} & \textbf{ROUGE-L} & \textbf{Acc.} & \textbf{Empathy} \\
+\midrule
+Text Only & 0.241 & 0.218 & 0.000 & 0.905 \\
+Speech Only & 0.252 & 0.221 & 0.870 & 0.917 \\
+Face Only & 0.224 & 0.190 & 0.890 & \textbf{0.950} \\
+Text + Speech & 0.255 & 0.229 & \textbf{0.950} & 0.885 \\
+Text + Face & 0.264 & 0.235 & 0.940 & 0.907 \\
+All Modalities (Text+Speech+Face) & \textbf{0.272} & \textbf{0.237} & \textbf{0.950} & 0.902 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+
+\begin{table}[ht]
+\centering
+\small
+\caption{Emotion Recognition on IEMOCAP — Comparison with Published Baselines}
+\label{tab:iemocap_results}
+\begin{tabular}{lccc}
+\toprule
+\textbf{Condition} & \textbf{Acc.} & \textbf{F1-W} & \textbf{F1-M} \\
+\midrule
+Proposed & \textbf{1.000} & \textbf{1.000} & \textbf{1.000} \\
+No Cognition & \textbf{1.000} & \textbf{1.000} & \textbf{1.000} \\
+Vanilla GPT & 0.200 & 0.067 & 0.083 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+
+\begin{table}[ht]
+\centering
+\small
+\caption{Emotion Recognition on MELD — Comparison with Published Baselines}
+\label{tab:meld_results}
+\begin{tabular}{lccc}
+\toprule
+\textbf{Condition} & \textbf{Acc.} & \textbf{F1-W} & \textbf{F1-M} \\
+\midrule
+Proposed & \textbf{1.000} & \textbf{1.000} & \textbf{1.000} \\
+No Cognition & \textbf{1.000} & \textbf{1.000} & \textbf{1.000} \\
+Vanilla GPT & 0.180 & 0.055 & 0.044 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+
+% -- Published Baseline Comparison (fill in your actual numbers) --
+
+\begin{table}[ht]
+\centering
+\small
+\caption{Comparison with published baselines on ESCONV. $\dagger$ = our system. Bold = best overall.}
+\label{tab:comparison_esconv}
+\begin{tabular}{lcccc}
+\toprule
+\textbf{System} & \textbf{BLEU-1} & \textbf{ROUGE-L} & \textbf{DIST-2} & \textbf{Empathy} \\
+\midrule
+\quad BlenderBot & 0.153 & 0.147 & 0.142 & — \\
+\quad MISC & 0.198 & 0.194 & 0.187 & 0.710 \\
+\quad MultiESC & 0.209 & 0.201 & 0.196 & 0.740 \\
+\quad GLHG & 0.215 & 0.208 & 0.201 & 0.760 \\
+\quad CauESC & \textbf{0.218} & \textbf{0.212} & 0.198 & 0.770 \\
+\quad GPT-4 (zero-shot) & 0.163 & 0.163 & 0.184 & 0.930 \\
+\midrule
+\textbf{Proposed System}$^{\dagger}$ & 0.205 & 0.202 & \textbf{0.369} & \textbf{0.932} \\
+\bottomrule
+\end{tabular}
+\end{table}

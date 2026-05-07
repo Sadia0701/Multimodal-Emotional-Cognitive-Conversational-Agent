@@ -1,0 +1,56 @@
+{
+  "with_cognition": {
+    "label": "Proposed (w/ Cognitive Layer)",
+    "metrics": {
+      "BLEU-1": 0.20496415049183575,
+      "BLEU-2": 0.09727561067376816,
+      "ROUGE-1": 0.30525775694455193,
+      "ROUGE-2": 0.07740924078942726,
+      "ROUGE-L": 0.202318832100747,
+      "DIST-1": 0.0962826743727834,
+      "DIST-2": 0.3692266737654732,
+      "Emotion-Acc": 0.95,
+      "Emotion-F1-W": 0.9504781028877415,
+      "Emotion-F1-M": 0.9650984891948747,
+      "Empathy-Score": 0.9325,
+      "Avg-Length": 76.13,
+      "Avg-Latency": 2.0309510350227358
+    }
+  },
+  "no_cognition": {
+    "label": "Ablation (w/o Cognitive Layer)",
+    "metrics": {
+      "BLEU-1": 0.20837358413035706,
+      "BLEU-2": 0.09312049842880767,
+      "ROUGE-1": 0.2962755915799986,
+      "ROUGE-2": 0.0663505442409,
+      "ROUGE-L": 0.1892166230423224,
+      "DIST-1": 0.11453396524486571,
+      "DIST-2": 0.3969502407704655,
+      "Emotion-Acc": 0.95,
+      "Emotion-F1-W": 0.9504781028877415,
+      "Emotion-F1-M": 0.9650984891948747,
+      "Empathy-Score": 0.87,
+      "Avg-Length": 63.3,
+      "Avg-Latency": 1.8037341666221618
+    }
+  },
+  "vanilla_gpt": {
+    "label": "Vanilla GPT-4o",
+    "metrics": {
+      "BLEU-1": 0.16149653489704008,
+      "BLEU-2": 0.07532861643283709,
+      "ROUGE-1": 0.2416094670758451,
+      "ROUGE-2": 0.05777140465758504,
+      "ROUGE-L": 0.16663548607545575,
+      "DIST-1": 0.09003161923780995,
+      "DIST-2": 0.3720422889746602,
+      "Emotion-Acc": 0.0,
+      "Emotion-F1-W": 0.0,
+      "Emotion-F1-M": 0.0,
+      "Empathy-Score": 0.945,
+      "Avg-Length": 120.18,
+      "Avg-Latency": 2.5152437114715576
+    }
+  }
+}

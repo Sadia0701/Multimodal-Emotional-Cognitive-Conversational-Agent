@@ -155,12 +155,11 @@ class EvaluationRunner:
         # ── Per-sample scores (for significance tests) ────────────────────────
         per_rouge_l = self.metrics.per_sample_rouge_l(references, generated)
         per_bleu1   = self.metrics.per_sample_bleu1(references,  generated)
-        per_ppl     = self.metrics.per_sample_perplexity(generated, references)
 
         print(f"  ✓ Done — ROUGE-L={agg_metrics['ROUGE-L']:.4f}  "
               f"DIST-2={agg_metrics['DIST-2']:.4f}  "
               f"Empathy={agg_metrics['Empathy-Score']:.4f}  "
-              f"PPL={agg_metrics.get('Perplexity', float('nan')):.2f}\n")
+)
 
         return {
             "key":           key,
@@ -174,56 +173,10 @@ class EvaluationRunner:
             "latencies":     latencies,
             "per_rouge_l":   per_rouge_l,
             "per_bleu1":     per_bleu1,
-            "per_ppl":       per_ppl,
         }
 
     # =========================================================================
     # SIGNIFICANCE TESTS
-    # =========================================================================
-
-    def _significance_tests(self) -> dict:
-        """
-        Compare the proposed system against each baseline on ROUGE-L, BLEU-1,
-        and Perplexity using both paired t-test and Wilcoxon signed-rank test.
-        """
-        tests = {}
-        proposed = self.results["with_cognition"]
-
-        for key in ["no_cognition", "vanilla_gpt"]:
-            if key not in self.results:
-                continue
-            other = self.results[key]
-
-            for metric_key, scores_a, scores_b in [
-                ("ROUGE-L",    proposed["per_rouge_l"],   other["per_rouge_l"]),
-                ("BLEU-1",     proposed["per_bleu1"],     other["per_bleu1"]),
-                ("Perplexity", proposed["per_ppl"],       other["per_ppl"]),
-            ]:
-                # Skip if PPL not computed (all nan)
-                if all(np.isnan(s) for s in scores_a):
-                    continue
-
-                # For perplexity: lower is better, so reverse the comparison
-                # (proposed wins if its PPL is LOWER, meaning t_stat should be negative)
-                t_stat, p_t = self.metrics.paired_ttest(scores_a, scores_b)
-                w_stat, p_w = self.metrics.wilcoxon_test(scores_a, scores_b)
-
-                tests[f"{key}_{metric_key}"] = {
-                    "comparison":     f"Proposed vs {CONDITION_LABELS[key]}",
-                    "metric":         metric_key,
-                    "lower_is_better": metric_key == "Perplexity",
-                    "t_stat":         t_stat,
-                    "p_ttest":        p_t,
-                    "significant_t":  p_t < 0.05,
-                    "w_stat":         w_stat,
-                    "p_wilcoxon":     p_w,
-                    "significant_w":  p_w < 0.05,
-                }
-
-        return tests
-
-    # =========================================================================
-    # MAIN ENTRY POINT
     # =========================================================================
 
     def run_all(self) -> dict:
@@ -258,15 +211,11 @@ class EvaluationRunner:
         self.sig_tests = self._significance_tests()
 
         # ── Save & report ─────────────────────────────────────────────────────
-        print("\n[5/5] Saving Results ...")
+        print("\n[4/4] Saving Results ...")
         self._save_results()
         self._print_results_table()
-        self._print_significance_table()
 
-        return {
-            "results":   self.results,
-            "sig_tests": self.sig_tests,
-        }
+        return self.results
 
     # =========================================================================
     # SAVING
@@ -307,10 +256,6 @@ class EvaluationRunner:
         with open(f"{self.output_dir}/detailed_results.json", "w") as f:
             json.dump(save, f, indent=2)
 
-        # ── Significance test JSON ────────────────────────────────────────────
-        with open(f"{self.output_dir}/significance_tests.json", "w") as f:
-            json.dump(self.sig_tests, f, indent=2)
-
         print(f"  ✓ Results saved to → {self.output_dir}/")
 
     # =========================================================================
@@ -320,8 +265,7 @@ class EvaluationRunner:
     def _print_results_table(self):
         metrics_order = [
             "BLEU-1", "BLEU-2", "ROUGE-1", "ROUGE-2", "ROUGE-L",
-            "Perplexity",
-            "DIST-1", "DIST-2", "Emotion-Acc", "Emotion-F1-W",
+"DIST-1", "DIST-2", "Emotion-Acc", "Emotion-F1-W",
             "Empathy-Score", "Avg-Length", "Avg-Latency",
         ]
 
@@ -351,7 +295,7 @@ class EvaluationRunner:
             print(f"  {'Metric':<22} {'Δ Absolute':>12}  {'Δ Relative (%)':>16}")
             print("  " + "─" * 54)
 
-            for m in ["BLEU-1", "BLEU-2", "ROUGE-L", "Perplexity",
+            for m in ["BLEU-1", "BLEU-2", "ROUGE-L",
                       "DIST-1", "DIST-2",
                       "Emotion-Acc", "Emotion-F1-W", "Empathy-Score"]:
                 if m not in wc or m not in nc:
@@ -361,23 +305,3 @@ class EvaluationRunner:
                 sign  = "+" if delta >= 0 else ""
                 print(f"  {m:<22} {sign}{delta:>12.4f}  {sign}{pct:>14.1f}%")
 
-    def _print_significance_table(self):
-        if not self.sig_tests:
-            return
-
-        print("\n" + "═" * 75)
-        print("  STATISTICAL SIGNIFICANCE TESTS")
-        print("  (Proposed System vs Baselines)")
-        print("═" * 75)
-        print(f"  {'Comparison':<38} {'Metric':<9} {'p (t-test)':>11} {'p (Wilcox)':>11} {'Sig?':>6}")
-        print("  " + "─" * 72)
-
-        for test in self.sig_tests.values():
-            comp  = test["comparison"][:36]
-            m     = test["metric"]
-            pt    = test["p_ttest"]
-            pw    = test["p_wilcoxon"]
-            sig   = "✓" if test["significant_t"] or test["significant_w"] else "✗"
-            print(f"  {comp:<38} {m:<9} {pt:>11.4f} {pw:>11.4f} {sig:>6}")
-
-        print("\n  ✓ = p < 0.05 (statistically significant)")

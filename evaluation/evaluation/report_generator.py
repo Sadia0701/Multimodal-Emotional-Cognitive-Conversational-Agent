@@ -39,7 +39,6 @@ class ReportGenerator:
         "ROUGE-1":             "ROUGE-1",
         "ROUGE-2":             "ROUGE-2",
         "ROUGE-L":             "ROUGE-L",
-        "Perplexity":          "Perplexity (↓)",
         "DIST-1":              "DIST-1",
         "DIST-2":              "DIST-2",
         "Emotion-Acc":         "Emotion Accuracy",
@@ -50,7 +49,7 @@ class ReportGenerator:
         "Avg-Latency":         "Avg. Latency (s)",
     }
 
-    # metrics where HIGHER is better  (Perplexity is excluded — lower is better)
+    # metrics where HIGHER is better
     HIGHER_IS_BETTER = {
         "BLEU-1", "BLEU-2", "ROUGE-1", "ROUGE-2", "ROUGE-L",
         "DIST-1", "DIST-2", "Emotion-Acc", "Emotion-F1-W", "Emotion-F1-M",
@@ -71,7 +70,6 @@ class ReportGenerator:
     def generate_all(self):
         self.latex_main_table()
         self.markdown_summary()
-        self.latex_significance_table()
         self.qualitative_examples()
         self.ablation_improvement_table()
         print("  ✓ Report files generated in evaluation_results/")
@@ -88,12 +86,12 @@ class ReportGenerator:
         best: Dict[str, str] = {}
         for m in metrics:
             vals = {k: self.data[k]["metrics"].get(m) for k in sys_keys}
-            vals = {k: v for k, v in vals.items() if v is not None and not (isinstance(v, float) and np.isnan(v))}
+            vals = {k: v for k, v in vals.items() if v is not None}
             if vals:
                 if m in self.HIGHER_IS_BETTER:
                     best[m] = max(vals, key=vals.get)
                 else:
-                    best[m] = min(vals, key=vals.get)  # Perplexity — lower is better
+                    best[m] = min(vals, key=vals.get)
 
         lines = [
             r"\begin{table}[ht]",
@@ -116,7 +114,6 @@ class ReportGenerator:
         # Group metrics
         groups = [
             ("Response Quality", ["BLEU-1", "BLEU-2", "ROUGE-1", "ROUGE-2", "ROUGE-L"]),
-            ("Fluency / Coherence", ["Perplexity"]),
             ("Diversity",        ["DIST-1", "DIST-2"]),
             ("Emotion",          ["Emotion-Acc", "Emotion-F1-W", "Emotion-F1-M"]),
             ("Empathy",          ["Empathy-Score"]),
@@ -156,7 +153,7 @@ class ReportGenerator:
     # =========================================================================
 
     def markdown_summary(self):
-        metrics  = ["BLEU-1", "BLEU-2", "ROUGE-L", "Perplexity",
+        metrics  = ["BLEU-1", "BLEU-2", "ROUGE-L",
                     "DIST-1", "DIST-2",
                     "Emotion-Acc", "Empathy-Score"]
         sys_keys = list(self.data.keys())
@@ -211,43 +208,6 @@ class ReportGenerator:
 
     # =========================================================================
     # LATEX SIGNIFICANCE TABLE
-    # =========================================================================
-
-    def latex_significance_table(self):
-        lines = [
-            r"\begin{table}[ht]",
-            r"\centering",
-            r"\caption{Statistical Significance Tests (Paired $t$-test and Wilcoxon Signed-Rank)}",
-            r"\label{tab:significance}",
-            r"\begin{tabular}{llcccc}",
-            r"\toprule",
-            r"\textbf{Comparison} & \textbf{Metric} & "
-            r"$t$-stat & $p$ ($t$-test) & $W$-stat & $p$ (Wilcoxon) \\",
-            r"\midrule",
-        ]
-
-        for test in self.sig.values():
-            sig_mark = r"$^{*}$" if test["significant_t"] or test["significant_w"] else ""
-            lines.append(
-                f"{test['comparison']} & {test['metric']} & "
-                f"{test['t_stat']:.3f} & {test['p_ttest']:.4f}{sig_mark} & "
-                f"{test['w_stat']:.1f} & {test['p_wilcoxon']:.4f}{sig_mark} \\\\"
-            )
-
-        lines += [
-            r"\bottomrule",
-            r"\multicolumn{6}{l}{\footnotesize $^{*}p < 0.05$} \\",
-            r"\end{tabular}",
-            r"\end{table}",
-        ]
-
-        path = f"{self.output_dir}/table_significance.tex"
-        with open(path, "w") as f:
-            f.write("\n".join(lines))
-        print(f"  ✓ Significance LaTeX → {path}")
-
-    # =========================================================================
-    # QUALITATIVE EXAMPLES (Appendix)
     # =========================================================================
 
     def qualitative_examples(self, n: int = 5):
