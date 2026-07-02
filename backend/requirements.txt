@@ -11,3 +11,7 @@ soundfile
 torch
 transformers
 websockets
+faster-whisper
+deepface
+piper-tts
+tf-keras
