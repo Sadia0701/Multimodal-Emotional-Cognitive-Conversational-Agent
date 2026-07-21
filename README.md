@@ -376,9 +376,7 @@ The interaction pipeline follows these steps:
 
 ---
 
-# Section 12 — ⚙️ Installation
 
----
 
 # ⚙️ Installation
 
