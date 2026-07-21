@@ -85,5 +85,32 @@ The demonstration showcases the complete interaction pipeline:
 - 🔄 Continuous multimodal perception and state updates
 
 > **Status:** Demo video is currently being prepared and will be added in a future release.
+
+---
+
+# 📚 Table of Contents
+
+- [Overview](#-overview)
+- [Motivation](#-motivation)
+- [Key Features](#-key-features)
+- [Architecture Overview](#-architecture-overview)
+- [Cognitive Architecture](#-cognitive-architecture)
+- [System Workflow](#-system-workflow)
+- [Technology Stack](#-technology-stack)
+- [Project Structure](#-project-structure)
+- [Installation](#-installation)
+- [Quick Start](#-quick-start)
+- [Configuration](#-configuration)
+- [Running the Project](#-running-the-project)
+- [Usage Guide](#-usage-guide)
+- [Project Screenshots](#-project-screenshots)
+- [Engineering Decisions](#-engineering-decisions)
+- [Performance & Evaluation](#-performance--evaluation)
+- [Future Roadmap](#-future-roadmap)
+- [Research Background](#-research-background)
+- [Citation](#-citation)
+- [Contributing](#-contributing)
+- [License](#-license)
+- [Author](#-author)
 - 
 - 🔄 Continuous working memory and dialogue state updates
