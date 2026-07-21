@@ -51,4 +51,39 @@ The project integrates modern AI technologies—including **FastAPI**, **WebSock
 - 🔊 Offline neural speech synthesis using Piper TTS
 - 👤 Real-time 3D avatar animation with Three.js
 - ⚡ FastAPI backend with WebSocket streaming
+
+---
+
+# 🎥 Demo Preview
+
+<p align="center">
+
+> 🚧 **Demo Video Coming Soon**
+
+*A complete demonstration showcasing MECCA's real-time multimodal interaction, cognitive reasoning pipeline, emotion-aware response generation, and avatar synchronization will be available soon.*
+
+</p>
+
+<p align="center">
+
+<img src="images/demo-preview.gif" width="90%">
+
+</p>
+
+### Demo Highlights
+
+The demonstration showcases the complete interaction pipeline:
+
+- 🎤 Real-time speech recognition using Faster-Whisper
+- 😊 Facial emotion recognition through live webcam analysis
+- 📝 Text understanding and conversational context management
+- 🧠 Cognitive reasoning using working memory, production rules, utility evaluation, and goal management
+- ❤️ Emotion-aware response generation
+- 🤖 GPT-powered dialogue generation
+- 🔊 Neural speech synthesis using Piper TTS
+- 👤 Real-time avatar lip synchronization and animation
+- 🔄 Continuous multimodal perception and state updates
+
+> **Status:** Demo video is currently being prepared and will be added in a future release.
+- 
 - 🔄 Continuous working memory and dialogue state updates
