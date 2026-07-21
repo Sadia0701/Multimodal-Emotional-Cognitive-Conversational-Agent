@@ -65,9 +65,17 @@ The project integrates modern AI technologies—including **FastAPI**, **WebSock
 </p>
 
 <p align="center">
+### Happy Feelings Demo
+<img src="images/Happy_demo.png" width="90%">
 
-<img src="images/demo-preview.gif" width="90%">
+### Sad Feelings Demo
+<img src="images/Sad_demo.png" width="90%">
 
+### Fear Feelings Demo
+<img src="images/Fear_demo.png" width="90%">
+
+### Neutral Feelings Demo
+<img src="images/Neutral_demo.png" width="90%">
 </p>
 
 ### Demo Highlights
