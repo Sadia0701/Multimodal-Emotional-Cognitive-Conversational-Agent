@@ -158,3 +158,178 @@ The primary objectives of this project are:
 - Provide a scalable foundation for future intelligent virtual agents.
 
 Rather than replacing Large Language Models, MECCA positions the LLM as one component within a broader cognitive system, enabling more structured decision-making and emotionally adaptive interactions.
+
+---
+
+# ✨ Key Features
+
+MECCA integrates multiple AI technologies into a unified cognitive framework for emotionally intelligent human-computer interaction.
+
+## 🎤 Multimodal Perception
+
+- 🎙️ Real-time Speech Recognition using **Faster-Whisper**
+- 😊 Facial Emotion Recognition using **DeepFace**
+- 💬 Natural Language Understanding through GPT-4o-mini
+- 📝 Textual conversation context management
+
+---
+
+## 🧠 Cognitive Intelligence
+
+Unlike conventional chatbot systems, MECCA introduces a dedicated cognitive layer responsible for reasoning before response generation.
+
+The cognitive architecture includes:
+
+- 🗂️ Working Memory
+- 🎯 Goal Management
+- ⚖️ Utility Evaluation
+- 📖 Production Rules
+- 🧠 Cognitive Decision Module
+- ❤️ Emotion-aware Reasoning
+- 💭 Context-aware Response Planning
+
+---
+
+## ❤️ Emotion-Aware Conversations
+
+MECCA continuously estimates the user's emotional state using multimodal signals.
+
+Supported capabilities include:
+
+- Facial emotion recognition
+- Text-based sentiment analysis
+- Emotion fusion
+- Valence-Arousal-Dominance (VAD) modeling
+- Emotion-aware prompt generation
+
+---
+
+## 🤖 Intelligent Response Generation
+
+- GPT-4o-mini powered reasoning
+- Context-aware conversations
+- Emotionally adaptive responses
+- Multi-turn dialogue support
+- Dynamic prompt engineering
+
+---
+
+## 👤 Interactive AI Avatar
+
+- Real-time avatar animation
+- Lip synchronization
+- Speech playback
+- Live emotion display
+- Interactive user interface
+
+---
+
+## ⚡ Real-Time Architecture
+
+- FastAPI backend
+- WebSocket communication
+- Modular AI services
+- Low-latency inference pipeline
+- Concurrent multimodal processing
+
+---
+
+## 🔧 Modular & Extensible Design
+
+MECCA is designed as an extensible platform where each subsystem operates independently.
+
+New modules such as:
+
+- Retrieval-Augmented Generation (RAG)
+- Long-term Memory
+- Multi-Agent Collaboration
+- Cloud Deployment
+- Vector Databases
+- MLOps Pipelines
+
+can be integrated with minimal architectural changes.
+
+---
+
+# 🏗️ Architecture Overview
+
+MECCA follows a modular, service-oriented architecture that separates perception, cognition, reasoning, and interaction into independent components.
+
+This design improves scalability, maintainability, and allows each module to evolve independently.
+
+<p align="center">
+
+<img src="images/System Architecture.png" width="95%">
+
+</p>
+
+---
+
+## High-Level Architecture
+
+The system consists of four major layers:
+
+| Layer | Responsibility |
+|--------|----------------|
+| **Perception Layer** | Processes speech, facial expressions, and textual input from the user. |
+| **Cognitive Layer** | Maintains working memory, evaluates goals, reasons about context, and determines the next cognitive action. |
+| **Reasoning Layer** | Generates emotionally adaptive responses using GPT-4o-mini and contextual prompts. |
+| **Interaction Layer** | Produces synthesized speech and controls the animated avatar for natural user interaction. |
+
+Each layer communicates through well-defined interfaces, enabling modular development and independent component upgrades.
+
+### Design Principles
+
+MECCA was designed around the following engineering principles:
+
+- **Modularity** — Independent AI services for speech, vision, cognition, and language.
+- **Scalability** — Components can be replaced or upgraded without redesigning the system.
+- **Extensibility** — New modalities and reasoning modules can be integrated easily.
+- **Real-Time Communication** — WebSocket-based streaming minimizes interaction latency.
+- **Separation of Concerns** — Perception, cognition, reasoning, and presentation remain decoupled.
+
+---
+
+# 🧠 Cognitive Architecture
+
+The defining characteristic of MECCA is its custom cognitive architecture, which enables reasoning beyond simple prompt-response interactions.
+
+Instead of directly forwarding user input to a Large Language Model, MECCA performs several intermediate cognitive processes inspired by classical cognitive architectures such as **ACT-R** and **SOAR**.
+
+<p align="center">
+
+<img src="images/cognitive module.png" width="90%">
+
+</p>
+
+---
+
+## Cognitive Pipeline
+
+The cognitive layer consists of seven collaborating modules:
+
+| Module | Responsibility |
+|--------|----------------|
+| **Working Memory** | Maintains dialogue history, user context, detected emotions, and recent interactions. |
+| **Goal Management** | Determines the conversational objective for the current interaction. |
+| **Production Rules** | Applies predefined reasoning rules based on contextual information. |
+| **Utility Evaluation** | Scores candidate actions according to contextual relevance and emotional state. |
+| **Decision Module** | Selects the most appropriate cognitive action. |
+| **Emotion Reasoning** | Integrates multimodal emotion information into response planning. |
+| **Response Planner** | Constructs structured prompts before invoking the language model. |
+
+---
+
+## Why a Cognitive Layer?
+
+Most conversational AI systems follow a simple pipeline:
+
+```text
+User Input
+      │
+      ▼
+Large Language Model
+      │
+      ▼
+Response
+
