@@ -390,18 +390,18 @@ git clone https://github.com/Sadia0701/Multimodal-Emotional-Cognitive-Conversati
 cd Multimodal-Emotional-Cognitive-Conversational-Agent
 ```
 
-###Create a virtual environment
+### Create a virtual environment
 ```bash
 python -m venv venv
 
 source venv/bin/activate
 ```
-###Windows
+### Windows
 ```bash
 venv\Scripts\activate
 ```
 
-###Install Dependencies
+### Install Dependencies
 ```bash
 pip install -r requirements.txt
 ```
@@ -411,11 +411,7 @@ Detailed setup instructions are available in docs/Installation.md
 
 ---
 
-# Section 13 — 🚀 Quick Start
 
-````markdown
-````
----
 
 # 🚀 Quick Start
 
