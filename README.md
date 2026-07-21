@@ -114,3 +114,26 @@ The demonstration showcases the complete interaction pipeline:
 - [License](#-license)
 - [Author](#-author)
   
+---
+
+# 🌍 Overview
+
+MECCA (**Multimodal Emotional & Cognitive Conversational Agent**) is an experimental AI platform for building emotionally intelligent conversational agents capable of perceiving, reasoning, and responding through multiple communication modalities.
+
+Unlike conventional conversational assistants that rely primarily on textual input, MECCA continuously processes **speech**, **facial expressions**, and **textual information** to understand both the semantic content and the emotional state of the user. These multimodal signals are fused into a unified representation that drives a custom cognitive architecture responsible for context management, emotional reasoning, decision making, and response planning.
+
+At the core of MECCA is a modular cognitive framework composed of seven interconnected components:
+
+- Working Memory
+- Goal Management
+- Utility Evaluation
+- Production Rules
+- Cognitive Decision Module
+- Emotion-Aware Reasoning
+- Response Planning
+
+Instead of directly forwarding user input to a Large Language Model, MECCA performs cognitive processing before invoking GPT-based reasoning, enabling responses that are more context-aware, emotionally adaptive, and behaviorally consistent.
+
+The platform follows a modular architecture where each subsystem—including speech recognition, vision processing, multimodal fusion, cognition, language generation, text-to-speech, and avatar rendering—operates independently while communicating through FastAPI and WebSocket services.
+
+This modular design makes MECCA extensible, allowing future integration of Retrieval-Augmented Generation (RAG), long-term semantic memory, agent collaboration, cloud deployment, and additional perception modalities without redesigning the overall architecture.
