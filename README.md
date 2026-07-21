@@ -83,6 +83,7 @@ The demonstration showcases the complete interaction pipeline:
 - 🔊 Neural speech synthesis using Piper TTS
 - 👤 Real-time avatar lip synchronization and animation
 - 🔄 Continuous multimodal perception and state updates
+- 🔄 Continuous working memory and dialogue state updates
 
 > **Status:** Demo video is currently being prepared and will be added in a future release.
 
@@ -112,5 +113,4 @@ The demonstration showcases the complete interaction pipeline:
 - [Contributing](#-contributing)
 - [License](#-license)
 - [Author](#-author)
-- 
-- 🔄 Continuous working memory and dialogue state updates
+  
