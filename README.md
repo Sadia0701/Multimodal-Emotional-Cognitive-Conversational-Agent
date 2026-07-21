@@ -65,6 +65,7 @@ The project integrates modern AI technologies—including **FastAPI**, **WebSock
 </p>
 
 <p align="center">
+  
 ### Happy Feelings Demo
 <img src="images/Happy_demo.png" width="90%">
 
