@@ -332,4 +332,149 @@ Large Language Model
       │
       ▼
 Response
+```
+---
+
+# 🔄 System Workflow
+
+MECCA processes user interactions through a modular multimodal pipeline.
+
+<p align="center">
+  <img src="images/MECCA_System_OVerview.png" width="95%">
+<img src="images/system-diagram.png" width="95%">
+</p>
+
+The interaction pipeline follows these steps:
+
+1. User provides speech, facial expressions, and text.
+2. Speech is transcribed using **Faster-Whisper**.
+3. Facial emotions are detected using **DeepFace**.
+4. Multimodal signals are fused into a unified representation.
+5. The cognitive layer updates working memory and determines the next action.
+6. GPT-4o-mini generates an emotion-aware response.
+7. Piper TTS synthesizes speech.
+8. The avatar delivers synchronized visual and spoken responses.
+
+---
+
+# 🛠 Technology Stack
+
+| Layer | Technology |
+|--------|------------|
+| Programming Language | Python 3.12 |
+| Backend | FastAPI |
+| Communication | WebSockets |
+| Speech Recognition | Faster-Whisper |
+| Emotion Recognition | DeepFace |
+| Computer Vision | OpenCV, MediaPipe |
+| Language Model | GPT-4o-mini |
+| Text-to-Speech | Piper TTS |
+| Avatar | Three.js |
+| Frontend | HTML, CSS, JavaScript |
+| AI Libraries | Transformers, PyTorch |
+
+
+---
+
+# Section 12 — ⚙️ Installation
+
+---
+
+# ⚙️ Installation
+
+### Clone the repository
+
+```bash
+git clone https://github.com/Sadia0701/Multimodal-Emotional-Cognitive-Conversational-Agent.git
+
+cd Multimodal-Emotional-Cognitive-Conversational-Agent
+```
+
+###Create a virtual environment
+```bash
+python -m venv venv
+
+source venv/bin/activate
+```
+###Windows
+```bash
+venv\Scripts\activate
+```
+
+###Install Dependencies
+```bash
+pip install -r requirements.txt
+```
+
+Detailed setup instructions are available in docs/Installation.md
+
+
+---
+
+# Section 13 — 🚀 Quick Start
+
+````markdown
+````
+---
+
+# 🚀 Quick Start
+
+1. Configure your `.env` file.
+2. Start the FastAPI backend.
+
+```bash
+python backend/main.py
+```
+
+3. Launch the frontend.
+
+4. Open your browser and interact with MECCA.
+
+The application will automatically initialize the speech, vision, cognitive, and avatar modules.
+
+---
+
+# ⚙️ Configuration
+
+Before running the project, configure the required environment variables.
+
+| Variable | Description |
+|-----------|-------------|
+| OPENAI_API_KEY | OpenAI API Key |
+| PIPER_MODEL | Piper TTS model |
+| WHISPER_MODEL | Faster-Whisper model |
+| CAMERA_INDEX | Webcam selection |
+
+Refer to `.env.example` for the complete configuration.
+
+---
+
+# ▶️ Running the Project
+
+Start the backend server:
+
+```bash
+python backend/main.py
+```
+
+Open the frontend in your browser.
+
+Allow microphone and camera permissions.
+
+Begin interacting with the avatar in real time.
+
+---
+
+# 💬 Usage Guide
+
+1. Allow camera and microphone access.
+2. Speak naturally to the avatar.
+3. MECCA analyzes speech and facial expressions simultaneously.
+4. The cognitive layer reasons over the interaction.
+5. An emotion-aware response is generated and spoken by the avatar.
+
+The interface continuously updates detected emotions, cognitive actions, and conversation history during the interaction.
+
+
+
 
