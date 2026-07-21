@@ -137,3 +137,24 @@ Instead of directly forwarding user input to a Large Language Model, MECCA perfo
 The platform follows a modular architecture where each subsystem—including speech recognition, vision processing, multimodal fusion, cognition, language generation, text-to-speech, and avatar rendering—operates independently while communicating through FastAPI and WebSocket services.
 
 This modular design makes MECCA extensible, allowing future integration of Retrieval-Augmented Generation (RAG), long-term semantic memory, agent collaboration, cloud deployment, and additional perception modalities without redesigning the overall architecture.
+
+---
+
+# 💡 Motivation
+
+Recent advances in Large Language Models have significantly improved conversational AI. However, most existing systems remain predominantly text-centric and lack the ability to perceive and reason about non-verbal human communication.
+
+Human conversations naturally involve multiple modalities—including spoken language, facial expressions, tone of voice, and contextual memory—that collectively influence understanding and response generation. Conventional chatbot architectures typically process only textual input, resulting in interactions that often overlook emotional context and user intent.
+
+MECCA was developed to explore a more human-centered approach to conversational AI by combining multimodal perception with cognitive reasoning.
+
+The primary objectives of this project are:
+
+- Develop an emotionally aware conversational framework.
+- Integrate speech, vision, and text into a unified perception pipeline.
+- Introduce a modular cognitive architecture capable of reasoning before response generation.
+- Maintain contextual continuity through working memory.
+- Generate responses that consider both semantic meaning and emotional state.
+- Provide a scalable foundation for future intelligent virtual agents.
+
+Rather than replacing Large Language Models, MECCA positions the LLM as one component within a broader cognitive system, enabling more structured decision-making and emotionally adaptive interactions.
